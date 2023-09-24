@@ -1,0 +1,34 @@
+name: Unit Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      Solution_Name: Thoth
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Install .NET Core 8.0
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 8.0
+
+    - name: Install nasm
+      run: sudo apt-get install -y nasm
+
+    - name: Install binutils
+      run: sudo apt-get install -y binutils
+
+    - name: Execute unit tests
+      run: dotnet test
