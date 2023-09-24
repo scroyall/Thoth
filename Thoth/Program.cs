@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Thoth.Parsing;
+﻿using Thoth.Parsing;
 using Thoth.Tokenization;
 using Thoth.Transpilation;
 using Thoth.Utils;
@@ -11,7 +10,7 @@ if (args.Length != 1)
 }
 
 var text = File.ReadAllText(args[0]);
-var tokenized = new Tokenizer(text).Tokenize();
+var tokenized = new Tokenizer().Tokenize(text);
 
 Console.WriteLine("Tokens: ");
 

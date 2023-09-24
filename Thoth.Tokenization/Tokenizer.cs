@@ -25,32 +25,33 @@ public class Tokenizer
     private const string LetKeyword = "let";
     private const string IfKeyword = "if";
 
-#endregion
+    #endregion
 
-    private readonly AtomStack<char?> _input;
+    private AtomStack<char?>? _input = null;
 
-    private readonly List<Token> _tokens = new();
-    private readonly List<string> _strings = new();
+    private AtomStack<char?> Input => _input ?? throw new NullReferenceException();
 
-    private int _line;
-    private int _column;
+    private List<Token> Tokens { get; } = [];
 
-    public Tokenizer(string input)
+    private List<string> Strings { get; } = [];
+
+    private int Line { get; set; }
+
+    private int Column { get; set; }
+
+    public TokenizedProgram Tokenize(string input)
     {
         var characters = input.Select(character => (char?) character).ToList();
         _input = new AtomStack<char?>(characters);
-    }
 
-    public TokenizedProgram Tokenize()
-    {
-        _tokens.Clear();
-        _strings.Clear();
+        Tokens.Clear();
+        Strings.Clear();
 
-        _input.Reset();
-        _line = 1;
-        _column = 1;
+        Input.Reset();
+        Line = 1;
+        Column = 1;
 
-        while (_input.Peek() is { } character)
+        while (Input.Peek() is { } character)
         {
             // Consume whitespace.
             if (char.IsWhiteSpace(character))
@@ -65,15 +66,15 @@ public class Tokenizer
                 continue;
             }
 
-            _tokens.Add(ParseToken());
+            Tokens.Add(ParseToken());
         }
 
-        return new TokenizedProgram(_tokens, _strings);
+        return new TokenizedProgram(Tokens, Strings);
     }
 
     private Token ParseToken()
     {
-        if (_input.Peek() is not { } character)
+        if (Input.Peek() is not { } character)
         {
             throw new UnexpectedEndOfInputException();
         }
@@ -92,7 +93,7 @@ public class Tokenizer
     {
         var buffer = new StringBuilder();
 
-        while (_input.Peek() is { } character)
+        while (Input.Peek() is { } character)
         {
             // Check the character continues the keyword.
             if (!char.IsLetterOrDigit(character))
@@ -126,7 +127,7 @@ public class Tokenizer
 
         bool negative = TryConsume((char) SymbolType.Minus); // Negative if the first character is a minus.
 
-        while (_input.Peek() is { } character)
+        while (Input.Peek() is { } character)
         {
             // Check the character continues the integer.
             if (!char.IsNumber(character))
@@ -157,7 +158,7 @@ public class Tokenizer
             case SymbolType.DoubleQuote: // Double quote starts a string literal.
                 return ParseString();
             case SymbolType.Minus: // Minus might start an integer.
-                if (_input.Peek(1) is { } next && char.IsNumber(next))
+                if (Input.Peek(1) is { } next && char.IsNumber(next))
                 {
                     return ParseInteger();
                 }
@@ -173,7 +174,7 @@ public class Tokenizer
         Consume('"');
 
         var buffer = new StringBuilder();
-        while (_input.Peek() is { } character)
+        while (Input.Peek() is { } character)
         {
             // Double quote terminates the string.
             if (character == '"') break;
@@ -194,7 +195,7 @@ public class Tokenizer
     private void ConsumeWhitespace()
     {
         // Consume until the next character is not whitespace.
-        while (_input.Peek() is { } character && char.IsWhiteSpace(character))
+        while (Input.Peek() is { } character && char.IsWhiteSpace(character))
         {
             switch (character)
             {
@@ -222,7 +223,7 @@ public class Tokenizer
 
     private void ConsumeComment()
     {
-        while (_input.Peek() is { } character)
+        while (Input.Peek() is { } character)
         {
             switch (character)
             {
@@ -237,7 +238,7 @@ public class Tokenizer
 
     private bool TryConsume(char symbol)
     {
-        if (_input.Peek() != symbol) return false;
+        if (Input.Peek() != symbol) return false;
 
         Consume();
         return true;
@@ -248,41 +249,41 @@ public class Tokenizer
     /// </summary>
     private void Consume()
     {
-        if (_input.Consume() is null)
+        if (Input.Consume() is null)
         {
             throw new UnexpectedEndOfInputException();
         }
 
-        _column++;
+        Column++;
     }
 
     private void Consume(char character)
     {
-        if (_input.Peek() is not { } peek) throw new UnexpectedEndOfInputException();
+        if (Input.Peek() is not { } peek) throw new UnexpectedEndOfInputException();
         if (peek != character) throw new UnexpectedCharacterException(peek);
 
-        _input.Consume();
+        Input.Consume();
     }
 
-    private SourceReference SourceReference => new(_line, _column);
+    private SourceReference SourceReference => new(Line, Column);
 
     private void IncrementLine()
     {
-        _line++;
-        _column = 1;
+        Line++;
+        Column = 1;
     }
 
     #region Strings
 
     private int CreateString(string value)
     {
-        if (_strings.Contains(value))
+        if (Strings.Contains(value))
         {
-            return _strings.IndexOf(value);
+            return Strings.IndexOf(value);
         }
         
-        _strings.Add(value);
-        return _strings.Count - 1;
+        Strings.Add(value);
+        return Strings.Count - 1;
     }
 
     #endregion

@@ -72,8 +72,8 @@ public class FileTests
     {
         var inputFileText = File.ReadAllText(filePath);
 
-        var tokenizer = new Tokenizer(inputFileText);
-        var parsed = new Parser().Parse(tokenizer.Tokenize());
+        var tokenized = new Tokenizer().Tokenize(inputFileText);
+        var parsed = new Parser().Parse(tokenized);
         var transpiler = new Transpiler();
 
         var asmFilePath = Path.Join(OutputDirectory, Path.GetFileNameWithoutExtension(filePath) + ".th");

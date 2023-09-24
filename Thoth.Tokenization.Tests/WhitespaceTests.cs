@@ -4,11 +4,12 @@ using Tokens;
 
 [Parallelizable]
 public class WhitespaceTests
+    : TokenizerTests
 {
     [Test]
     public void IgnoresWhiteSpace([Values] WhiteSpaceType whitespace)
     {
-        var tokenized = new Tokenizer($"{whitespace.ToCharacter()}").Tokenize();
+        var tokenized = Tokenize($"{whitespace.ToCharacter()}");
 
         Assert.That(tokenized.Tokens, Has.Count.EqualTo(0), "Expected zero tokens.");
     }
@@ -25,12 +26,12 @@ public class WhitespaceTests
         IgnoresWhiteSpaceAroundKeyword("{1}{0}", whitespace, keyword);
     }
 
-    private static void IgnoresWhiteSpaceAroundKeyword(string format, WhiteSpaceType whitespace, KeywordType keyword)
+    private void IgnoresWhiteSpaceAroundKeyword(string format, WhiteSpaceType whitespace, KeywordType keyword)
     {
         var text = string.Format(format, whitespace.ToCharacter(), keyword.ToIdentifier());
-        var tokenized = new Tokenizer(text).Tokenize();
+        var tokenized = Tokenize(text);
 
         Assert.That(tokenized.Tokens, Has.Count.EqualTo(1), "Expected only one token.");
-        Assert.That(tokenized.Tokens, Has.Exactly(1).Matches<KeywordToken>(t => (t.Type == keyword)), $"Expected keyword token of type {keyword}.");
+        Assert.That(tokenized.Tokens, Has.Exactly(1).TypeOf<KeywordToken>().With.Property("Type").EqualTo(keyword), $"Expected keyword token of type {keyword}.");
     }
 }

@@ -4,19 +4,12 @@ using Thoth.Parsing.Statements;
 namespace Thoth.Transpilation.Tests;
 
 [Parallelizable]
+[FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
 public abstract class TranspilerTests
 {
-    private Transpiler? _transpiler;
-
-    protected Transpiler Transpiler => _transpiler ?? throw new NullReferenceException();
+    protected Transpiler Transpiler { get; } = new TestTranspiler();
 
     protected static IEnumerable<BasicType> Types => Enum.GetValues<BasicType>();
-
-    [SetUp]
-    public void SetUp()
-    {
-        _transpiler = new TestTranspiler();
-    }
 
     /// <summary>
     /// Transpile a parsed program, discarding the output.

@@ -4,7 +4,7 @@ public abstract class ValueToken<TValue>
     : Token
     where TValue : notnull
 {
-    public readonly TValue Value;
+    public TValue Value { get; }
 
     protected ValueToken(TValue value, SourceReference source)
         : base(source)
