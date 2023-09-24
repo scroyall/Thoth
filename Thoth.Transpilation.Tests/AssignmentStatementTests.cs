@@ -30,7 +30,7 @@ public class AssignmentStatementTests
     }
 
     [Test]
-    public void Assignment_ThrowsMismatchedTypeException_WhenExpressionTypeDiffers(
+    public void Assignment_ThrowsMismatchedTypeException_WhenExpressionTypeDiffersFromDefinition(
         [ValueSource(nameof(Types))] BasicType variableType,
         [ValueSource(nameof(Types))] BasicType expressionType)
     {

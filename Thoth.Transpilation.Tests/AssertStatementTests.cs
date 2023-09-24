@@ -6,7 +6,7 @@ class AssertStatementTests
     : TranspilerTests
 {
     [Test]
-    public void AssertStatement_DoesNotThrow_WhenValueReturnsBoolean()
+    public void AssertStatement_DoesNotThrow_WhenConditionTypeIsBoolean()
     {
         Transpile(
             Fakes.Assert(condition: Fakes.Boolean)
@@ -14,7 +14,7 @@ class AssertStatementTests
     }
 
     [Test]
-    public void AssertStatement_ThrowsMismatchedTypeException_WhenConditionReturnsNonBooleanType(
+    public void AssertStatement_ThrowsMismatchedTypeException_WhenConditionTypeIsNotBoolean(
         [ValueSource(nameof(Types))] BasicType type)
     {
         if (type == BasicType.Boolean) Assert.Ignore("Type is boolean.");

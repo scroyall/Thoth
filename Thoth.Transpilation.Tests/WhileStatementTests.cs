@@ -6,7 +6,7 @@ class WhileStatementTests
     : TranspilerTests
 {
     [Test]
-    public void WhileStatement_DoesNotThrow_WhenConditionReturnsBoolean()
+    public void WhileStatement_DoesNotThrow_WhenConditionTypeIsBoolean()
     {
         Transpile(
             Fakes.While(condition: Fakes.Boolean)
@@ -14,7 +14,7 @@ class WhileStatementTests
     }
 
     [Test]
-    public void WhileStatement_ThrowsMismatchedTypeException_WhenConditionReturnsNonBooleanType(
+    public void WhileStatement_ThrowsMismatchedTypeException_WhenConditionTypeIsNotBoolean(
         [ValueSource(nameof(Types))] BasicType type)
     {
         if (type == BasicType.Boolean) Assert.Ignore("Type is boolean.");

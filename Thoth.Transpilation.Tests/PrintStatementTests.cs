@@ -14,7 +14,7 @@ public class PrintStatementTests
     }
 
     [Test]
-    public void Print_ThrowsUnresolvedTypeException_WhenExpressionTypeUnresolved()
+    public void Print_ThrowsUnresolvedTypeException_WhenExpressionTypeIsUnresolved()
     {
         Assert.Throws<UnresolvedTypeException>(() => Transpile(
             Fakes.Print(Fakes.UnresolvedType)
