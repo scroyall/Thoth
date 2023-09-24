@@ -1,0 +1,12 @@
+let n = 10;
+
+# 0! = 1
+let result = 1;
+
+while (n > 0)
+{
+    result = result * n;
+    n = n - 1;
+}
+
+assert(result == 3628800);

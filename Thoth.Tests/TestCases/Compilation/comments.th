@@ -1,0 +1,7 @@
+# Everything after a # is completely ignored until the end of the line.
+
+# Comments can contain keywords and symbols like exit, if, +, -, and ;.
+
+let x = 1; # Comments can come after other code without affecting it.
+
+# let x = 1; # Comments which look like code are still just comments.

@@ -1,0 +1,9 @@
+let start = 1;
+let end = 10;
+for (i in start..end)
+{
+    # Changes to the variables in the range do not affect the range after the loop starts.
+    start = start + 1;
+    end = end - 1;
+}
+exit(end);

@@ -1,0 +1,6 @@
+let larger = 5;
+let smaller = 3;
+if (smaller < larger)
+{
+    exit(1);
+}

@@ -1,0 +1,10 @@
+let loops = 0;
+for (i in 1..10)
+{
+    # Count the number of loops.
+    loops = loops + 1;
+
+    # Skip over an iteration.
+    i = i + 1;
+}
+exit(loops);
