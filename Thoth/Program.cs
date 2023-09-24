@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
-using Thoth.Parser;
-using Thoth.Tokenizer;
-using Thoth.Transpiler;
+using Thoth.Parsing;
+using Thoth.Tokenization;
+using Thoth.Transpilation;
 using Thoth.Utils;
 
 if (args.Length != 1)
@@ -30,7 +30,7 @@ foreach (var token in tokenized.Tokens)
 }
 Console.WriteLine();
 
-var parsed = new Parser(tokenized).Parse();
+var parsed = new Parser().Parse(tokenized);
 
 Console.WriteLine();
 Console.WriteLine("Statements:\n\t" + string.Join("\n\t", parsed.Statements));

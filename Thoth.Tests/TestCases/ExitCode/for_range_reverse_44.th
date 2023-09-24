@@ -1,6 +1,0 @@
-let result = 0;
-for (value in 9..2)
-{
-    result = result + value;
-}
-exit(result);

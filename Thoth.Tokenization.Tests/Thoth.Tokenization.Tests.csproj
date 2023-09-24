@@ -18,15 +18,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ContentWithTargetPath Include="TestCases\**">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <TargetPath>TestCases\%(RecursiveDir)\%(FileName)%(Extension)</TargetPath>
-        </ContentWithTargetPath>
-    </ItemGroup>
-    
-    <ItemGroup>
-      <ProjectReference Include="..\Thoth.Transpilation\Thoth.Transpilation.csproj" />
-      <ProjectReference Include="..\Thoth.Utils\Thoth.Utils.csproj" />
+      <ProjectReference Include="..\Thoth.Tokenization\Thoth.Tokenization.csproj" />
     </ItemGroup>
 
 </Project>

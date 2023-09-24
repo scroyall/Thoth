@@ -2,15 +2,15 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Thoth.Parser\Thoth.Parser.csproj" />
-      <ProjectReference Include="..\Thoth.Tokenizer\Thoth.Tokenizer.csproj" />
-      <ProjectReference Include="..\Thoth.Transpiler\Thoth.Transpiler.csproj" />
+      <ProjectReference Include="..\Thoth.Parsing\Thoth.Parsing.csproj" />
+      <ProjectReference Include="..\Thoth.Tokenization\Thoth.Tokenization.csproj" />
+      <ProjectReference Include="..\Thoth.Transpilation\Thoth.Transpilation.csproj" />
     </ItemGroup>
 
 

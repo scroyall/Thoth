@@ -6,4 +6,17 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+
+    <ItemGroup>
+      <ProjectReference Include="..\Thoth.Utils\Thoth.Utils.csproj" />
+    </ItemGroup>
+
+
+
+
+
+
+
+
+
 </Project>

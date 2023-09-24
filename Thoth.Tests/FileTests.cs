@@ -1,11 +1,11 @@
 using System.Diagnostics;
 
-namespace Thoth.Tests;
+using Thoth.Parsing;
+using Thoth.Tokenization;
+using Thoth.Transpilation;
+using Thoth.Utils;
 
-using Parser;
-using Tokenizer;
-using Transpiler;
-using Utils;
+namespace Thoth.Tests;
 
 public class FileTests
 {
@@ -73,8 +73,7 @@ public class FileTests
         var inputFileText = File.ReadAllText(filePath);
 
         var tokenizer = new Tokenizer(inputFileText);
-        var parser = new Parser(tokenizer.Tokenize());
-        var parsed = parser.Parse();
+        var parsed = new Parser().Parse(tokenizer.Tokenize());
         var transpiler = new Transpiler();
 
         var asmFilePath = Path.Join(OutputDirectory, Path.GetFileNameWithoutExtension(filePath) + ".th");
