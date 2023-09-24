@@ -1,5 +1,6 @@
 namespace Thoth.Parsing.Tests;
 
+[Parallelizable]
 public abstract class ParserTests
 {
     private Parser? _parser;
