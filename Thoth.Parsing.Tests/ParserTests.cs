@@ -1,5 +1,3 @@
-using Thoth.Tokenization;
-
 namespace Thoth.Parsing.Tests;
 
 public abstract class ParserTests

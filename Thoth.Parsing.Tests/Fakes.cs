@@ -1,5 +1,4 @@
 using Thoth.Tokenization;
-using Thoth.Tokenization.Tokens;
 
 namespace Thoth.Parsing.Tests;
 
