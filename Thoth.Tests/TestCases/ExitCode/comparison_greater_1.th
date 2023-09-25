@@ -1,5 +1,5 @@
-let larger = 5;
-let smaller = 3;
+var larger = 5;
+var smaller = 3;
 if (larger > smaller)
 {
     exit(1);

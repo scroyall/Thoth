@@ -1,9 +1,9 @@
-let highest = 9223372036854775807;
+var highest = 9223372036854775807;
 print("9223372036854775807 = ");
 print(highest);
 print("\n");
 
-let lowest = 9223372036854775807;
+var lowest = 9223372036854775807;
 print("9223372036854775807 = ");
 print(lowest);
 print("\n");

@@ -1,4 +1,4 @@
-let result = 0;
+var result = 0;
 for (value in 2..9)
 {
     result = result + value;

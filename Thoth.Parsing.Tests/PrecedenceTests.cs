@@ -12,7 +12,7 @@ public class PrecedenceTests
         [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.Boolean     ))] OperatorType boolean,
         [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.Mathematical))] OperatorType mathematical)
     {
-        var program = Parser.Parse(Fakes.Program($"let value = 0 {boolean.ToSourceString()} 0 {mathematical.ToSourceString()} 0;"));
+        var program = Parse($"var value = 0 {boolean.ToSourceString()} 0 {mathematical.ToSourceString()} 0;");
 
         Assert.That(program.Statements, Has.Exactly(1).TypeOf<DefinitionStatement>()
                                            .And.Property("Value")
@@ -24,7 +24,7 @@ public class PrecedenceTests
         [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.Boolean     ))] OperatorType boolean,
         [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.Mathematical))] OperatorType mathematical)
     {
-        var program = Parser.Parse(Fakes.Program($"let value = 0 {mathematical.ToSourceString()} 0 {boolean.ToSourceString()} 0;"));
+        var program = Parse($"var value = 0 {mathematical.ToSourceString()} 0 {boolean.ToSourceString()} 0;");
 
         Assert.That(program.Statements, Has.Exactly(1).TypeOf<DefinitionStatement>()
                                            .And.Property("Value")

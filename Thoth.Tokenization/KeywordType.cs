@@ -3,7 +3,7 @@ namespace Thoth.Tokenization;
 public enum KeywordType
 {
     Exit,
-    Let,
+    Var,
     If,
     While,
     For,

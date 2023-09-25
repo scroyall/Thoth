@@ -1,12 +1,12 @@
 {
     # Variables defined in a scope only exist within it.
-    let x = 1;
+    var x = 1;
 }
 
 # Variables previously defined inside a closed scope can be defined again.
-let x = 2;
+var x = 2;
 
 # Variables can't be defined inside a scope if they've already been defined outside it.
 # {
-#     let x = 1; # <- Would fail to compile; x was already defined above.
+#     var x = 1; # <- Would fail to compile; x was already defined above.
 # }

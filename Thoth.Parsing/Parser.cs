@@ -55,7 +55,7 @@ public class Parser
         return keyword.Type switch
         {
             KeywordType.Exit   => ParseExit(),
-            KeywordType.Let    => ParseDefinition(),
+            KeywordType.Var    => ParseDefinition(),
             KeywordType.If     => ParseConditional(),
             KeywordType.While  => ParseWhile(),
             KeywordType.For    => ParseFor(),
@@ -128,7 +128,7 @@ public class Parser
 
     private DefinitionStatement ParseDefinition()
     {
-        var let = ConsumeKeyword(KeywordType.Let);
+        var keyword = ConsumeKeyword(KeywordType.Var);
         var identifier = ConsumeToken<IdentifierToken>();
 
         ConsumeSymbol(SymbolType.Equals);
@@ -137,7 +137,7 @@ public class Parser
 
         ConsumeSymbol(SymbolType.Semicolon);
 
-        return new DefinitionStatement(identifier.Name, expression, let.Source);
+        return new DefinitionStatement(identifier.Name, expression, keyword.Source);
     }
 
     private ConditionalStatement ParseConditional()

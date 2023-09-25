@@ -1,7 +1,7 @@
-let n = 10;
+var n = 10;
 
 # 0! = 1
-let result = 1;
+var result = 1;
 
 while (n > 0)
 {
