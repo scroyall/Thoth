@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # 
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Thoth", "Thoth\Thoth.csproj", "{A4E47564-A51D-4C3E-A621-6959493E0870}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Thoth.Compiler", "Thoth.Compiler\Thoth.Compiler.csproj", "{A4E47564-A51D-4C3E-A621-6959493E0870}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Thoth.Tokenization", "Thoth.Tokenization\Thoth.Tokenization.csproj", "{97CCCF2B-CB78-42E6-B2B8-D09471C2277F}"
 EndProject
