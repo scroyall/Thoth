@@ -21,4 +21,5 @@
       <ProjectReference Include="..\Thoth.Parsing\Thoth.Parsing.csproj" />
       <ProjectReference Include="..\Thoth.Tokenization\Thoth.Tokenization.csproj" />
     </ItemGroup>
+
 </Project>

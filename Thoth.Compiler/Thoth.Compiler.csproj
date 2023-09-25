@@ -13,5 +13,4 @@
       <ProjectReference Include="..\Thoth.Transpilation\Thoth.Transpilation.csproj" />
     </ItemGroup>
 
-
 </Project>

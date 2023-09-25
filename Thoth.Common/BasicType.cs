@@ -1,4 +1,4 @@
-namespace Thoth.Parsing;
+namespace Thoth;
 
 public enum BasicType
 {
@@ -6,6 +6,9 @@ public enum BasicType
     Boolean,
     String
 }
+
+public class MismatchedTypeException(BasicType expected, BasicType actual)
+    : Exception($"Type mismatch; expected {expected} not {actual}.");
 
 public class UnresolvedTypeException()
     : Exception();

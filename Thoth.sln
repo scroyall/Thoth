@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Thoth.Tests", "Thoth.Tests\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Thoth.Transpilation.Tests", "Thoth.Transpilation.Tests\Thoth.Transpilation.Tests.csproj", "{980888B4-9CA5-44A7-911F-D64FAE1B480A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Thoth.Common", "Thoth.Common\Thoth.Common.csproj", "{D740B279-E226-4C77-A524-36A3D20C5ACE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,5 +63,9 @@ Global
 		{980888B4-9CA5-44A7-911F-D64FAE1B480A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{980888B4-9CA5-44A7-911F-D64FAE1B480A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{980888B4-9CA5-44A7-911F-D64FAE1B480A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D740B279-E226-4C77-A524-36A3D20C5ACE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D740B279-E226-4C77-A524-36A3D20C5ACE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D740B279-E226-4C77-A524-36A3D20C5ACE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D740B279-E226-4C77-A524-36A3D20C5ACE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

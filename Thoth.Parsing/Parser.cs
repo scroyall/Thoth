@@ -10,9 +10,6 @@ using Utils;
 public class UnexpectedTokenException(Token token)
     : Exception($"Unexpected token '{token}'.");
 
-public class MismatchedTypeException(BasicType expected, BasicType actual)
-    : Exception($"Type mismatch; expected {expected} not {actual}.");
-
 public class Parser
 {
     private AtomStack<Token>? _tokens = null;

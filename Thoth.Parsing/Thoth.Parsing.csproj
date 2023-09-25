@@ -7,6 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Thoth.Common\Thoth.Common.csproj" />
       <ProjectReference Include="..\Thoth.Tokenization\Thoth.Tokenization.csproj" />
     </ItemGroup>
+
 </Project>
