@@ -24,7 +24,7 @@ public static class BasicTypeExtensions
 
     public static BasicType? CheckMatches(this BasicType? type, BasicType? other)
     {
-        // Unresolved types matches any other resolved or unresolved type.
+        // Unresolved types match any other resolved or unresolved type.
         if (type is null || other is null) return type;
 
         return CheckMatches(type.Resolved(), other.Resolved());
