@@ -5,7 +5,7 @@ public class IdentifierToken
 {
     public string Name => Value;
 
-    public IdentifierToken(string value, SourceReference source)
-        : base(value, source)
+    public IdentifierToken(string name, SourceReference source)
+        : base(name, source)
     { }
 }
