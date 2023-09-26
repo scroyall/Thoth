@@ -10,4 +10,7 @@ public static class OperatorValueSources
 
     public static IEnumerable<OperatorType> Boolean
         => Operators.Where(o => o.IsBooleanOperation());
+
+    public static IEnumerable<OperatorType> BinaryBoolean
+        => Boolean.Where(o => !o.IsUnaryOperation());
 }

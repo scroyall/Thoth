@@ -1,3 +1,5 @@
+using System.Net.NetworkInformation;
+
 namespace Thoth.Parsing;
 
 public enum OperatorType
@@ -12,11 +14,62 @@ public enum OperatorType
     GreaterThanOrEqual,
     LessThanOrEqual,
     Equal,
-    NotEqual
+    NotEqual,
+    Not
+}
+
+public class InvalidOperationException(OperatorType operation, OperatorType? expected = null, string? message = null)
+    : Exception(message ?? GenerateMessage(operation, expected))
+{
+    public readonly OperatorType Operation = operation;
+
+    public readonly OperatorType? Expected = expected;
+
+    private static string GenerateMessage(OperatorType operation, OperatorType? expected)
+    {
+        if (expected is not null) return $"Expected operation {expected} not {operation}.";
+
+        return $"Unexpected operation {operation}.";
+    }
 }
 
 public static class OperatorTypeExtensions
 {
+
+#region Validation
+    
+    public static OperatorType CheckBoolean(this OperatorType operation)
+    {
+        if (!IsBooleanOperation(operation)) throw new InvalidOperationException(operation, message: $"Expected boolean operation not {operation}.");
+
+        return operation;
+    }
+
+    public static OperatorType CheckMathematical(this OperatorType operation)
+    {
+        if (!IsMathemeticalOperation(operation)) throw new InvalidOperationException(operation, message: $"Expected mathematical operation not {operation}.");
+
+        return operation;
+    }
+
+    public static OperatorType CheckUnary(this OperatorType operation)
+    {
+        if (!IsUnaryOperation(operation)) throw new InvalidOperationException(operation, message: $"Expected unary operation not {operation}.");
+
+        return operation;
+    }
+
+    public static OperatorType CheckEquals(this OperatorType operation, OperatorType expected)
+    {
+        if (operation != expected) throw new InvalidOperationException(operation, expected);
+
+        return operation;
+    }
+
+#endregion
+
+#region Attributes
+
     public static bool IsMathemeticalOperation(this OperatorType type)
     {
         return type switch
@@ -40,10 +93,23 @@ public static class OperatorTypeExtensions
             OperatorType.LessThanOrEqual    => true,
             OperatorType.Equal              => true,
             OperatorType.NotEqual           => true,
+            OperatorType.Not                => true,
 
             _ => false,
         };
     }
+
+    public static bool IsUnaryOperation(this OperatorType type)
+    {
+        return type switch
+        {
+            OperatorType.Not => true,
+
+            _ => false,
+        };
+    }
+
+#endregion
 
     public static string ToSourceString(this OperatorType type)
     {
@@ -60,6 +126,7 @@ public static class OperatorTypeExtensions
             OperatorType.Equal              => "==",
             OperatorType.NotEqual           => "!=",
             OperatorType.Range              => "..",
+            OperatorType.Not                => "!",
 
             _ => throw new NotImplementedException()
         };

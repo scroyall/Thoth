@@ -13,6 +13,6 @@ public class BinaryOperationExpression
     
     protected override string ArgumentsToString()
     {
-        return $"Left={Left}, Right={Right}";
+        return $"{Left} {Operation} {Right}";
     }
 }

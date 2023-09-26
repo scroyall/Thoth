@@ -19,5 +19,17 @@ public class UndefinedVariableException(string identifier)
 public class MultiplyDefinedVariableException(string identifier)
     : Exception($"Variable '{identifier}' is already defined.");
 
-public class UnexpectedOperationException(OperatorType type, string? message = null)
-    : Exception($"Unexpected operation {type}{(message is not null ? "; " + message : string.Empty)}.");
+public class UnexpectedOperationException(OperatorType operation, OperatorType? expected = null, string? message = null)
+    : Exception(message ?? GenerateMessage(operation, expected))
+{
+    public readonly OperatorType Operation = operation;
+
+    public readonly OperatorType? Expected = expected;
+
+    public static string GenerateMessage(OperatorType operation, OperatorType? expected)
+    {
+        if (expected is not null) return $"Expected operation {expected} not {operation}.";
+
+        return $"Unexpected operation {operation}.";
+    }
+}

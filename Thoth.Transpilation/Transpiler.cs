@@ -480,7 +480,7 @@ public class Transpiler
                 GeneratePush("rax");
                 break;
             default:
-                throw new UnexpectedOperationException(operation, "expected mathematical operation");
+                throw new Parsing.InvalidOperationException(operation, message: $"Expected mathematical operation not {operation}.");
         }
 
         return BasicType.Integer;
@@ -499,7 +499,7 @@ public class Transpiler
             OperatorType.Equal              => GenerateBooleanBinaryOperation("e"),
             OperatorType.NotEqual           => GenerateBooleanBinaryOperation("ne"),
 
-            _ => throw new UnexpectedOperationException(operation, "expected boolean operation")
+            _ => throw new Parsing.InvalidOperationException(operation, message: $"Expected boolean operation not {operation}.")
         };
     }
 
@@ -510,6 +510,41 @@ public class Transpiler
         WriteLine($"set{comparison} cl"); // Set the result register to 1 if the comparison is true.
         GeneratePush("rcx"); // Push the result on to the stack.
 
+        return BasicType.Boolean;
+    }
+
+    protected BasicType GenerateExpression(UnaryOperationExpression expression)
+    {
+        WriteCommentLine(expression);
+
+        // Generate the sub-expression, pushing its result onto the stack.
+        TryGenerateExpression(expression.Value).CheckMatches(expression.Type);
+
+        // Pop the sub-expression value from the top of the stack.
+        GeneratePop("rax");
+
+        return expression.Operation switch
+        {
+            OperatorType.Not => GenerateNotOperation(expression),
+
+            _ => throw new Parsing.InvalidOperationException(expression.Operation)
+        };
+    }
+
+    protected BasicType GenerateNotOperation(UnaryOperationExpression expression)
+    {
+        // The not operation can only be applied to boolean expressions.
+        expression.Type.CheckMatches(BasicType.Boolean);
+
+        WriteCommentLine("not");
+
+        // Invert the value.
+        WriteLine("xor rax, 1");
+
+        // Push the inverted value back on to the stack.
+        GeneratePush("rax");
+
+        // The not operation always 
         return BasicType.Boolean;
     }
 

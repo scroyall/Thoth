@@ -6,6 +6,9 @@ assert(false == false);
 assert(true  != false);
 assert(false != true);
 
+assert(!false);
+assert(!!true);
+
 bool t = true;
 bool f = false;
 
@@ -16,6 +19,9 @@ assert(f == f);
 
 assert(t != f);
 assert(f != t);
+
+assert(!f);
+assert(!!t);
 
 bool v = t;
 v = f;

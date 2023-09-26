@@ -262,6 +262,9 @@ public class Parser
                 expression = ParseExpression();
                 ConsumeSymbol(SymbolType.RightParenthesis);
                 break;
+            case SymbolToken { Type: SymbolType.Exclamation }:
+                expression = new UnaryOperationExpression(BasicType.Boolean, OperatorType.Not, ParseExpression());
+                break;
             case { } token:
                 throw new UnexpectedTokenException(token);
             default:

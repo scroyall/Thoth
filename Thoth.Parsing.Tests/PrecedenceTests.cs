@@ -8,9 +8,9 @@ public class PrecedenceTests
     : ParserTests
 {
     [Test]
-    public void BooleanOperator_HasPrecedenceOver_FollowingMathematicalOperator(
-        [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.Boolean     ))] OperatorType boolean,
-        [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.Mathematical))] OperatorType mathematical)
+    public void BinaryBooleanOperator_HasPrecedenceOver_FollowingMathematicalOperator(
+        [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.BinaryBoolean))] OperatorType boolean,
+        [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.Mathematical ))] OperatorType mathematical)
     {
         var program = Parse($"var value = 0 {boolean.ToSourceString()} 0 {mathematical.ToSourceString()} 0;");
 
@@ -20,9 +20,9 @@ public class PrecedenceTests
     }
 
     [Test]
-    public void BooleanOperator_HasPrecedenceOver_PrecedingMathematicalOperator(
-        [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.Boolean     ))] OperatorType boolean,
-        [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.Mathematical))] OperatorType mathematical)
+    public void BinaryBooleanOperator_HasPrecedenceOver_PrecedingMathematicalOperator(
+        [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.BinaryBoolean))] OperatorType boolean,
+        [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.Mathematical ))] OperatorType mathematical)
     {
         var program = Parse($"var value = 0 {mathematical.ToSourceString()} 0 {boolean.ToSourceString()} 0;");
 
