@@ -9,6 +9,7 @@ public abstract class TranspilerTests
 {
     protected Transpiler Transpiler { get; } = new TestTranspiler();
 
+    // TODO Remove and use [Values] instead.
     protected static IEnumerable<BasicType> Types => Enum.GetValues<BasicType>();
 
     /// <summary>

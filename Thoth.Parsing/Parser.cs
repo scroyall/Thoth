@@ -43,8 +43,9 @@ public class Parser
         return Tokens.Peek() switch
         {
             KeywordToken keyword => ParseKeyword(keyword),
-            SymbolToken symbol => ParseSymbol(symbol),
-            IdentifierToken => ParseIdentifier(),
+            SymbolToken symbol   => ParseSymbol(symbol),
+            IdentifierToken      => ParseIdentifier(),
+            TypeToken            => ParseDefinition(),
             { } token => throw new UnexpectedTokenException(token),
             null => throw new UnexpectedEndOfInputException()
         };
@@ -128,16 +129,35 @@ public class Parser
 
     private DefinitionStatement ParseDefinition()
     {
-        var keyword = ConsumeKeyword(KeywordType.Var);
+        var type = ParseType(out var source);
+
         var identifier = ConsumeToken<IdentifierToken>();
 
         ConsumeSymbol(SymbolType.Equals);
 
         var expression = ParseExpression();
+        expression.Type.CheckMatches(type);
 
         ConsumeSymbol(SymbolType.Semicolon);
 
-        return new DefinitionStatement(identifier.Name, expression, keyword.Source);
+        return new DefinitionStatement(type ?? expression.Type, identifier.Name, expression, source);
+    }
+
+    private BasicType? ParseType(out SourceReference source)
+    {
+        switch (Tokens.Consume())
+        {
+            case TypeToken typeToken:
+                source = typeToken.Source;
+                return typeToken.Type;
+            case KeywordToken { Type: KeywordType.Var } varToken:
+                source = varToken.Source;
+                return null;
+            case { } token:
+                throw new UnexpectedTokenException(token);
+            default:
+                throw new UnexpectedEndOfInputException();
+        }
     }
 
     private ConditionalStatement ParseConditional()

@@ -109,9 +109,15 @@ public class Tokenizer
         var word = buffer.ToString();
 
         // Check for keywords.
-        if (Enum.TryParse(word, true, out KeywordType type))
+        if (Enum.TryParse(word, true, out KeywordType keyword))
         {
-            return new KeywordToken(type, SourceReference.OffsetBy(buffer.Length));
+            return new KeywordToken(keyword, SourceReference.OffsetBy(buffer.Length));
+        }
+
+        // Check for types.
+        if (BasicTypeExtensions.TryParse(word, out var type))
+        {
+            return new TypeToken(type, SourceReference.OffsetBy(buffer.Length));
         }
 
         // Everything that's not a keyword must be an identifier.

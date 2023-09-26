@@ -10,16 +10,16 @@ namespace Thoth.Transpilation.Tests;
 public class TestTranspiler
     : Transpiler
 {
-    protected override BasicType? TryGenerateExpression(Expression expression)
+    protected override BasicType TryGenerateExpression(Expression expression)
         => GenerateExpression(expression as dynamic);
 
-    protected BasicType? GenerateExpression(Fakes.FakeExpression expression)
+    protected BasicType GenerateExpression(Fakes.FakeExpression expression)
     {
         // Push NUL to fake the expression value.
         WriteCommentLine("fake expression");
         GeneratePush("0");
 
-        return expression.Type;
+        return expression.Type.Resolved();
     }
 
     protected override void TryGenerateStatement(Statement statement)

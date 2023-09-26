@@ -39,8 +39,8 @@ public static class Fakes
     public static ConditionalStatement Conditional(Expression? condition = null, Statement? statement = null)
         => new ConditionalStatement(condition ?? Boolean, statement ?? Statement, SourceReference);
 
-    public static DefinitionStatement Definition(BasicType? type, string identifier = "fake")
-        => new DefinitionStatement(identifier, Expression(type), SourceReference);
+    public static DefinitionStatement Definition(BasicType? type, string identifier = "fake", Expression? expression = null)
+        => new DefinitionStatement(type, identifier, expression ?? Expression(type), SourceReference);
 
     public static PrintStatement Print(BasicType? type)
         => new PrintStatement(Expression(type), SourceReference);

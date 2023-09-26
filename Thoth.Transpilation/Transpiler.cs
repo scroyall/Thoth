@@ -138,7 +138,7 @@ public class Transpiler
         GenerateConditionalLoop(
             generateTest: (breakLabel) =>
             {
-                TryGenerateExpression(loop.Condition).Resolved().CheckMatches(BasicType.Boolean);
+                TryGenerateExpression(loop.Condition).CheckMatches(BasicType.Boolean);
 
                 // Test the result of the condition expression and break out of the loop if it's zero.
                 GenerateTestZero(breakLabel);
@@ -172,7 +172,7 @@ public class Transpiler
     {
         WriteCommentLine(conditional);
 
-        TryGenerateExpression(conditional.Condition).Resolved().CheckMatches(BasicType.Boolean);
+        TryGenerateExpression(conditional.Condition).CheckMatches(BasicType.Boolean);
 
         var label = $"{NextLabel}conditional";
         GenerateTestZero(label);
@@ -187,7 +187,7 @@ public class Transpiler
         WriteCommentLine(assignment);
 
         var definition = GetVariableDefinition(assignment.Identifier);
-        TryGenerateExpression(assignment.Value).Resolved().CheckMatches(definition.Type);
+        TryGenerateExpression(assignment.Value).CheckMatches(definition.Type);
 
         // Pop the result of the expression off the stack.
         GeneratePop("rax");
@@ -225,9 +225,13 @@ public class Transpiler
     {
         WriteCommentLine(definition);
 
-        BasicType type = TryGenerateExpression(definition.Value).Resolved();
+        // Generate the expression for the value, ensuring it's of a resolved type.
+        var expressionType = TryGenerateExpression(definition.Value);
 
-        PushDefinedVariable(type, definition.Identifier);
+        // Check the expression type matches the definition type.
+        expressionType.CheckMatches(definition.Type);
+
+        PushDefinedVariable(definition.Type ?? expressionType, definition.Identifier);
     }
 
     protected void GenerateStatement(EnumeratorStatement enumerator)
@@ -270,7 +274,7 @@ public class Transpiler
     {
         WriteCommentLine(assert);
 
-        TryGenerateExpression(assert.Condition).Resolved().CheckMatches(BasicType.Boolean);
+        TryGenerateExpression(assert.Condition).CheckMatches(BasicType.Boolean);
 
         var label = $"{NextLabel}_assert_pass";
 
@@ -297,7 +301,7 @@ public class Transpiler
                 GeneratePrintStringLiteral(literal.Index);
                 break;
             case Expression { } expression:
-                var type = TryGenerateExpression(expression).Resolved();
+                var type = TryGenerateExpression(expression);
 
                 switch (type)
                 {
@@ -374,10 +378,10 @@ public class Transpiler
 
     #region Expressions
 
-    protected virtual BasicType? TryGenerateExpression(Expression expression)
+    protected virtual BasicType TryGenerateExpression(Expression expression)
         => GenerateExpression(expression as dynamic);
 
-    protected BasicType? GenerateExpression(Expression expression)
+    protected BasicType GenerateExpression(Expression expression)
     {
         // Catch any expressions which don't match an overload.
         throw new UnexpectedExpressionException(expression);
@@ -386,7 +390,7 @@ public class Transpiler
     /// <remarks>
     /// Push an integer value on to the stack.
     /// </remarks>
-    protected BasicType? GenerateExpression(IntegerExpression integer)
+    protected BasicType GenerateExpression(IntegerExpression integer)
     {
         WriteCommentLine("integer literal");
 
@@ -408,7 +412,7 @@ public class Transpiler
     /// <remarks>
     /// Push a copy of a variable's value on to the stack.
     /// </remarks>
-    protected BasicType? GenerateExpression(VariableExpression variable)
+    protected BasicType GenerateExpression(VariableExpression variable)
     {
         WriteCommentLine(variable);
 
@@ -423,7 +427,7 @@ public class Transpiler
     /// Generate the left and right hand sides of a binary expression, perform an operation, and push the result on to
     /// the stack.
     /// </remarks>
-    protected BasicType? GenerateExpression(BinaryOperationExpression expression)
+    protected BasicType GenerateExpression(BinaryOperationExpression expression)
     {
         WriteCommentLine(expression);
 
@@ -442,7 +446,7 @@ public class Transpiler
         throw new UnexpectedExpressionException(expression);
     }
 
-    protected BasicType? GenerateMathematicalBinaryOperation(OperatorType operation)
+    protected BasicType GenerateMathematicalBinaryOperation(OperatorType operation)
     {
         switch (operation)
         {
@@ -473,7 +477,7 @@ public class Transpiler
         return BasicType.Integer;
     }
 
-    protected BasicType? GenerateBooleanBinaryOperation(OperatorType operation)
+    protected BasicType GenerateBooleanBinaryOperation(OperatorType operation)
     {
         WriteCommentLine(operation.ToSourceString());
 
@@ -490,7 +494,7 @@ public class Transpiler
         };
     }
 
-    protected BasicType? GenerateBooleanBinaryOperation(string comparison)
+    protected BasicType GenerateBooleanBinaryOperation(string comparison)
     {
         WriteLine($"xor rcx, rcx"); // Zero out the result register.
         WriteLine($"cmp rax, rbx"); // Compare the two value registers.
