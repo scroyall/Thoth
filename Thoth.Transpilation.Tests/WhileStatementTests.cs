@@ -15,7 +15,7 @@ class WhileStatementTests
 
     [Test]
     public void WhileStatement_ThrowsMismatchedTypeException_WhenConditionTypeIsNotBoolean(
-        [ValueSource(nameof(Types))] BasicType type)
+        [Values] BasicType type)
     {
         if (type == BasicType.Boolean) Assert.Ignore("Type is boolean.");
 

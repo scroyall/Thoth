@@ -7,7 +7,7 @@ public class AssignmentStatementTests
 {
     [Test]
     public void Assignment_DoesNotThrow_WhenExpressionTypeMatchesDefinition(
-        [ValueSource(nameof(Types))] BasicType type)
+        [Values] BasicType type)
     {
         var definition = Fakes.Definition(type);
 
@@ -19,7 +19,7 @@ public class AssignmentStatementTests
 
     [Test]
     public void Assignment_ThrowsUnresolvedTypeException_WhenExpressionTypeIsUnresolved(
-        [ValueSource(nameof(Types))] BasicType variableType)
+        [Values] BasicType variableType)
     {
         var definition = Fakes.Definition(variableType);
 
@@ -31,8 +31,8 @@ public class AssignmentStatementTests
 
     [Test]
     public void Assignment_ThrowsMismatchedTypeException_WhenExpressionTypeDiffersFromDefinition(
-        [ValueSource(nameof(Types))] BasicType variableType,
-        [ValueSource(nameof(Types))] BasicType expressionType)
+        [Values] BasicType variableType,
+        [Values] BasicType expressionType)
     {
         if (expressionType == variableType) Assert.Ignore("Expression type matches variable type.");
 
