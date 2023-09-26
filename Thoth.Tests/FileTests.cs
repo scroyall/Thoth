@@ -58,7 +58,7 @@ public class FileTests
     [TestCaseSource(nameof(CompilationTestCases))]
     public void CompilesAndRuns(string path)
     {
-        CompileAndRun(path);
+        Assert.That(CompileAndRun(path), Is.EqualTo(0), "Expected exit with code zero.");
     }
 
     [Test]
