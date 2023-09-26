@@ -17,7 +17,9 @@ public enum SymbolType
     LeftChevron = '<',
     RightChevron = '>',
     Exclamation = '!',
-    DoubleQuote = '"'
+    DoubleQuote = '"',
+    Ampersand = '&',
+    VerticalBar = '|',
 }
 
 public static class SymbolExtensions

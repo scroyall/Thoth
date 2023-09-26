@@ -1,3 +1,4 @@
+using System.Collections;
 using Thoth.Tokenization;
 using Thoth.Tokenization.Tokens;
 
@@ -14,6 +15,9 @@ public static class Fakes
     public static TokenizedProgram Program(params Token[] tokens)
         => new(tokens, new List<string>{ "FakeString" });
 
+    public static TokenizedProgram Program(IEnumerable<Token> tokens)
+        => new(tokens.ToList(), new List<string>{ "FakeString" });
+
     public static BooleanLiteralToken BooleanLiteral
         => new(true, SourceReference);
     
@@ -28,6 +32,8 @@ public static class Fakes
 
     public static Token Literal(BasicType type)
     {
+        if (type == BasicType.String) Assert.Ignore("String literals are not yet implemented.");
+
         return type switch
         {
             BasicType.Integer => IntegerLiteral,
@@ -35,6 +41,23 @@ public static class Fakes
             BasicType.Boolean => BooleanLiteral,
             _ => throw new NotImplementedException()
         };
+    }
+
+    public static void Operation(ref List<Token> tokens, OperatorType operation)
+    {
+        switch (operation)
+        {
+            case OperatorType.And:
+                tokens.Add(Symbol(SymbolType.Ampersand));
+                tokens.Add(Symbol(SymbolType.Ampersand));
+                break;
+            case OperatorType.Or:
+                tokens.Add(Symbol(SymbolType.VerticalBar));
+                tokens.Add(Symbol(SymbolType.VerticalBar));
+                break;
+            default:
+                throw new NotImplementedException();
+        }
     }
 
     public static StringLiteralToken StringLiteral

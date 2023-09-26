@@ -1,6 +1,4 @@
-using System.Net.NetworkInformation;
-
-namespace Thoth.Parsing;
+namespace Thoth;
 
 public enum OperatorType
 {
@@ -15,7 +13,9 @@ public enum OperatorType
     LessThanOrEqual,
     Equal,
     NotEqual,
-    Not
+    Not,
+    And,
+    Or
 }
 
 public class InvalidOperationException(OperatorType operation, OperatorType? expected = null, string? message = null)
@@ -70,6 +70,18 @@ public static class OperatorTypeExtensions
 
 #region Attributes
 
+    public static bool IsLogicalOperation(this OperatorType type)
+    {
+        return type switch
+        {
+            OperatorType.Not => true,
+            OperatorType.And => true,
+            OperatorType.Or  => true,
+
+            _ => false,
+        };
+    }
+
     public static bool IsMathemeticalOperation(this OperatorType type)
     {
         return type switch
@@ -93,7 +105,6 @@ public static class OperatorTypeExtensions
             OperatorType.LessThanOrEqual    => true,
             OperatorType.Equal              => true,
             OperatorType.NotEqual           => true,
-            OperatorType.Not                => true,
 
             _ => false,
         };

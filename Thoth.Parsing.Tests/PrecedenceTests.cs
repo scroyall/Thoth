@@ -1,5 +1,6 @@
 using Thoth.Parsing.Expressions;
 using Thoth.Parsing.Statements;
+using Thoth.Tests;
 
 namespace Thoth.Parsing.Tests;
 

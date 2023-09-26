@@ -245,33 +245,31 @@ public class Parser
 
     private Expression ParseExpression(int minimumPrecedence = 0)
     {
-        Expression expression;
+        Expression left;
 
         switch (Tokens.Consume())
         {
             case IntegerLiteralToken integer:
-                expression = new IntegerExpression(integer.Value);
+                left = new IntegerExpression(integer.Value);
                 break;
             case BooleanLiteralToken boolean:
-                expression = new BooleanLiteralExpression(boolean.Value);
+                left = new BooleanLiteralExpression(boolean.Value);
                 break;
             case IdentifierToken identifier:
-                expression = ParseVariableExpression(identifier);
+                left = ParseVariableExpression(identifier);
                 break;
             case SymbolToken { Type: SymbolType.LeftParenthesis }:
-                expression = ParseExpression();
+                left = ParseExpression();
                 ConsumeSymbol(SymbolType.RightParenthesis);
                 break;
             case SymbolToken { Type: SymbolType.Exclamation }:
-                expression = new UnaryOperationExpression(BasicType.Boolean, OperatorType.Not, ParseExpression());
+                left = new UnaryOperationExpression(BasicType.Boolean, OperatorType.Not, ParseExpression());
                 break;
             case { } token:
                 throw new UnexpectedTokenException(token);
             default:
                 throw new UnexpectedEndOfInputException();
         }
-
-        var type = expression.Type;
 
         // Check for a binary expression.
         while (PeekOperator(out var length) is { } operation &&
@@ -280,14 +278,28 @@ public class Parser
         {
             ConsumeSymbols(length);
 
+            // Parse the expression for the right hand side.
             var right = ParseExpression(operatorPrecedence);
-            right.Type.CheckMatches(type);
+            right.Type.CheckMatches(left.Type);
 
-            expression = new BinaryOperationExpression(type, operation, expression, right);
+            // Binary expressions preferentially inherit their type from the left side, falling back to the right side.
+            var type = left.Type ?? right.Type;
+
+            if (operation.IsLogicalOperation())
+            {
+                // Both sides of logical operations must match the boolean type.
+                left.Type.CheckMatches(BasicType.Boolean);
+                right.Type.CheckMatches(BasicType.Boolean);
+
+                // Logical operations are always of boolean type.
+                type = BasicType.Boolean;
+            }
+
+            left = new BinaryOperationExpression(type, operation, left, right);
         }
 
         // Not a binary expression.
-        return expression;
+        return left;
     }
 
     private VariableExpression ParseVariableExpression(IdentifierToken identifier)
@@ -344,6 +356,22 @@ public class Parser
                 {
                     length = 2;
                     return OperatorType.NotEqual;
+                }
+
+                break;
+            case SymbolType.Ampersand:
+                if (Tokens.Peek(1) is SymbolToken { Type: SymbolType.Ampersand })
+                {
+                    length = 2;
+                    return OperatorType.And;
+                }
+
+                break;
+            case SymbolType.VerticalBar:
+                if (Tokens.Peek(1) is SymbolToken { Type: SymbolType.VerticalBar })
+                {
+                    length = 2;
+                    return OperatorType.Or;
                 }
 
                 break;
@@ -407,12 +435,6 @@ public class Parser
     {
         switch (type)
         {
-            case OperatorType.Add:
-            case OperatorType.Subtract:
-                return 2;
-            case OperatorType.Multiply:
-            case OperatorType.Divide:
-                return 3;
             case OperatorType.GreaterThan:
             case OperatorType.LessThan:
             case OperatorType.GreaterThanOrEqual:
@@ -420,6 +442,14 @@ public class Parser
             case OperatorType.Equal:
             case OperatorType.NotEqual:
                 return 1;
+            case OperatorType.Add:
+            case OperatorType.Subtract:
+            case OperatorType.And:
+            case OperatorType.Or:
+                return 2;
+            case OperatorType.Multiply:
+            case OperatorType.Divide:
+                return 3;
             default:
                 return 0; // Other symbols are not binary operators and have no precedence.
         }

@@ -1,4 +1,4 @@
-namespace Thoth.Parsing.Tests;
+namespace Thoth.Tests;
 
 public static class OperatorValueSources
 {
@@ -13,4 +13,10 @@ public static class OperatorValueSources
 
     public static IEnumerable<OperatorType> BinaryBoolean
         => Boolean.Where(o => !o.IsUnaryOperation());
+
+    public static IEnumerable<OperatorType> Logical
+        => Operators.Where(o => o.IsLogicalOperation());
+
+    public static IEnumerable<OperatorType> BinaryLogical
+        => Logical.Where(o => !o.IsUnaryOperation());
 }

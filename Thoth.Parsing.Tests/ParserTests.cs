@@ -16,4 +16,7 @@ public abstract class ParserTests
 
     protected ParsedProgram Parse(params Token[] tokens)
         => Parse(Fakes.Program(tokens));
+
+    protected ParsedProgram Parse(IEnumerable<Token> tokens)
+        => Parse(Fakes.Program(tokens));
 }

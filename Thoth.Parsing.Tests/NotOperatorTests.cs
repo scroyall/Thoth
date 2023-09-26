@@ -4,11 +4,11 @@ using Thoth.Tokenization;
 
 namespace Thoth.Parsing.Tests;
 
-public class OperatorTests
+public class NotOperatorTests
     : ParserTests
 {
     [Test]
-    public void NotExpression_ParsesWhenValueIsBoolean()
+    public void NotOperator_Parses_WhenOperandIsBoolean()
     {
         var program = Parse(
             Fakes.Keyword(KeywordType.Var),
@@ -31,7 +31,7 @@ public class OperatorTests
     }
 
     [Test]
-    public void NotExpression_ParsesWhenValueTypeIsUnresolved()
+    public void NotOperator_Parses_WhenOperandTypeIsUnresolved()
     {
         var program = Parse(
             Fakes.Keyword(KeywordType.Var),
@@ -54,7 +54,7 @@ public class OperatorTests
     }
 
     [Test]
-    public void NotExpression_ThrowInvalidTypeException_WhenValueIsNotBoolean([Values] BasicType valueType)
+    public void NotOperator_Parses_WhenOperandIsNotBoolean([Values] BasicType valueType)
     {
         if (valueType == BasicType.Boolean) Assert.Ignore("Value type is boolean.");
         if (valueType == BasicType.String)  Assert.Ignore("String literals cannot be parsed as expressions yet.");

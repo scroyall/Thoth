@@ -451,6 +451,12 @@ public class Transpiler
         var operation = expression.Operation;
         if (operation.IsMathemeticalOperation()) return GenerateMathematicalBinaryOperation(operation);
         if (operation.IsBooleanOperation()) return GenerateBooleanBinaryOperation(operation);
+        if (operation.IsLogicalOperation())
+        {
+            expressionType.CheckMatches(BasicType.Boolean);
+
+            return GenerateLogicalBinaryOperation(operation);
+        }
 
         throw new UnexpectedExpressionException(expression);
     }
@@ -480,7 +486,7 @@ public class Transpiler
                 GeneratePush("rax");
                 break;
             default:
-                throw new Parsing.InvalidOperationException(operation, message: $"Expected mathematical operation not {operation}.");
+                throw new InvalidOperationException(operation, message: $"Expected mathematical operation not {operation}.");
         }
 
         return BasicType.Integer;
@@ -499,7 +505,7 @@ public class Transpiler
             OperatorType.Equal              => GenerateBooleanBinaryOperation("e"),
             OperatorType.NotEqual           => GenerateBooleanBinaryOperation("ne"),
 
-            _ => throw new Parsing.InvalidOperationException(operation, message: $"Expected boolean operation not {operation}.")
+            _ => throw new InvalidOperationException(operation, message: $"Expected boolean operation not {operation}.")
         };
     }
 
@@ -509,6 +515,27 @@ public class Transpiler
         WriteLine($"cmp rax, rbx"); // Compare the two value registers.
         WriteLine($"set{comparison} cl"); // Set the result register to 1 if the comparison is true.
         GeneratePush("rcx"); // Push the result on to the stack.
+
+        return BasicType.Boolean;
+    }
+
+    protected BasicType GenerateLogicalBinaryOperation(OperatorType operation)
+    {
+        switch (operation)
+        {
+            case OperatorType.And:
+                WriteCommentLine("and");
+                WriteLine("and rax, rbx");
+                GeneratePush("rax");
+                break;
+            case OperatorType.Or:
+                WriteCommentLine("or");
+                WriteLine("or rax, rbx");
+                GeneratePush("rax");
+                break;
+            default:
+                throw new InvalidOperationException(operation, message: $"Expected logical operation not {operation}.");
+        }
 
         return BasicType.Boolean;
     }
@@ -527,7 +554,7 @@ public class Transpiler
         {
             OperatorType.Not => GenerateNotOperation(expression),
 
-            _ => throw new Parsing.InvalidOperationException(expression.Operation)
+            _ => throw new InvalidOperationException(expression.Operation)
         };
     }
 
