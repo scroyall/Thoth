@@ -697,8 +697,7 @@ public class Transpiler
             throw new UndefinedVariableException(identifier);
         }
 
-        // TODO Remove unnecessary parentheses.
-        return (_stackSize - definition.Index);
+        return _stackSize - definition.Index;
     }
 
     private DefinedVariable GetVariableDefinition(string identifier)
