@@ -1,0 +1,21 @@
+assert(true);
+
+assert(true  == true);
+assert(false == false);
+
+assert(true  != false);
+assert(false != true);
+
+bool t = true;
+bool f = false;
+
+assert(t);
+
+assert(t == t);
+assert(f == f);
+
+assert(t != f);
+assert(f != t);
+
+bool v = t;
+v = f;

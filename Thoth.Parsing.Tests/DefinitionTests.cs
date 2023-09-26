@@ -9,7 +9,6 @@ public class DefinitionTests
     [Test]
     public void DefinitionStatement_Parses_WhenVariableTypeIsUnresolved_AndExpressionIsLiteral([Values] BasicType type)
     {
-        if (type == BasicType.Boolean) Assert.Ignore("Boolean literals are not implemented.");
         if (type == BasicType.String)  Assert.Ignore("String literal assignment is not implemented.");
 
         var program = Parse(
@@ -54,8 +53,6 @@ public class DefinitionTests
     [Test]
     public void DefinitionStatement_Parses_WhenVariableTypeIsResolved_AndExpressionIsMatchingLiteral([Values] BasicType type)
     {
-
-        if (type == BasicType.Boolean) Assert.Ignore("Boolean literals are not implemented.");
         if (type == BasicType.String)  Assert.Ignore("String literal assignment is not implemented.");
 
         var program = Parse(

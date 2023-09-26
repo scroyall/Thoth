@@ -108,6 +108,10 @@ public class Tokenizer
 
         var word = buffer.ToString();
 
+        // Check for boolean literals.
+        if (word == "true" ) return new BooleanLiteralToken(true,  SourceReference.OffsetBy(4));
+        if (word == "false") return new BooleanLiteralToken(false, SourceReference.OffsetBy(5));
+
         // Check for keywords.
         if (Enum.TryParse(word, true, out KeywordType keyword))
         {

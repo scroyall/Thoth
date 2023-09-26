@@ -1,4 +1,3 @@
-using NUnit.Framework.Constraints;
 using Thoth.Tokenization;
 using Thoth.Tokenization.Tokens;
 
@@ -14,6 +13,9 @@ public static class Fakes
 
     public static TokenizedProgram Program(params Token[] tokens)
         => new(tokens, new List<string>{ "FakeString" });
+
+    public static BooleanLiteralToken BooleanLiteral
+        => new(true, SourceReference);
     
     public static IdentifierToken Identifier(string name = "fake")
         => new(name, SourceReference);
@@ -29,7 +31,8 @@ public static class Fakes
         return type switch
         {
             BasicType.Integer => IntegerLiteral,
-            BasicType.String => StringLiteral,
+            BasicType.String  => StringLiteral,
+            BasicType.Boolean => BooleanLiteral,
             _ => throw new NotImplementedException()
         };
     }

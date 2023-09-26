@@ -392,7 +392,7 @@ public class Transpiler
     /// </remarks>
     protected BasicType GenerateExpression(IntegerExpression integer)
     {
-        WriteCommentLine("integer literal");
+        WriteCommentLine($"integer literal ({integer.Value})");
 
         // Check if the integer fits in 32 bits, which is the most that can pushed as an immediate.
         if (Math.Abs(integer.Value) < Math.Pow(2, 32))
@@ -407,6 +407,15 @@ public class Transpiler
         }
 
         return BasicType.Integer;
+    }
+
+    protected BasicType GenerateExpression(BooleanLiteralExpression boolean)
+    {
+        WriteCommentLine($"boolean literal ({boolean.Value})");
+
+        GeneratePush(boolean.Value ? "1" : "0");
+
+        return BasicType.Boolean;
     }
 
     /// <remarks>

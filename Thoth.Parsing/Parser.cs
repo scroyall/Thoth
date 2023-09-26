@@ -252,6 +252,9 @@ public class Parser
             case IntegerLiteralToken integer:
                 expression = new IntegerExpression(integer.Value);
                 break;
+            case BooleanLiteralToken boolean:
+                expression = new BooleanLiteralExpression(boolean.Value);
+                break;
             case IdentifierToken identifier:
                 expression = ParseVariableExpression(identifier);
                 break;
