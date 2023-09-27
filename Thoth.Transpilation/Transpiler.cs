@@ -450,7 +450,7 @@ public class Transpiler
 
         var operation = expression.Operation;
         if (operation.IsMathemeticalOperation()) return GenerateMathematicalBinaryOperation(operation);
-        if (operation.IsBooleanOperation()) return GenerateBooleanBinaryOperation(operation);
+        if (operation.IsComparisonOperation()) return GenerateComparisonOperation(operation);
         if (operation.IsLogicalOperation())
         {
             expressionType.CheckMatches(BasicType.Boolean);
@@ -492,24 +492,24 @@ public class Transpiler
         return BasicType.Integer;
     }
 
-    protected BasicType GenerateBooleanBinaryOperation(OperatorType operation)
+    protected BasicType GenerateComparisonOperation(OperatorType operation)
     {
         WriteCommentLine(operation.ToSourceString());
 
         return operation switch
         {
-            OperatorType.GreaterThan        => GenerateBooleanBinaryOperation("g"),
-            OperatorType.LessThan           => GenerateBooleanBinaryOperation("l"),
-            OperatorType.GreaterThanOrEqual => GenerateBooleanBinaryOperation("ge"),
-            OperatorType.LessThanOrEqual    => GenerateBooleanBinaryOperation("le"),
-            OperatorType.Equal              => GenerateBooleanBinaryOperation("e"),
-            OperatorType.NotEqual           => GenerateBooleanBinaryOperation("ne"),
+            OperatorType.GreaterThan        => GenerateComparisonOperation("g"),
+            OperatorType.LessThan           => GenerateComparisonOperation("l"),
+            OperatorType.GreaterThanOrEqual => GenerateComparisonOperation("ge"),
+            OperatorType.LessThanOrEqual    => GenerateComparisonOperation("le"),
+            OperatorType.Equal              => GenerateComparisonOperation("e"),
+            OperatorType.NotEqual           => GenerateComparisonOperation("ne"),
 
             _ => throw new InvalidOperationException(operation, message: $"Expected boolean operation not {operation}.")
         };
     }
 
-    protected BasicType GenerateBooleanBinaryOperation(string comparison)
+    protected BasicType GenerateComparisonOperation(string comparison)
     {
         WriteLine($"xor rcx, rcx"); // Zero out the result register.
         WriteLine($"cmp rax, rbx"); // Compare the two value registers.

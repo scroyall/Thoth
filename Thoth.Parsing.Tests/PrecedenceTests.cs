@@ -9,26 +9,26 @@ public class PrecedenceTests
     : ParserTests
 {
     [Test]
-    public void BinaryBooleanOperator_HasPrecedenceOver_FollowingMathematicalOperator(
-        [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.BinaryBoolean))] OperatorType boolean,
-        [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.Mathematical ))] OperatorType mathematical)
+    public void ComparisonOperator_HasPrecedenceOver_FollowingMathematicalOperator(
+        [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.Comparison  ))] OperatorType comparison,
+        [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.Mathematical))] OperatorType mathematical)
     {
-        var program = Parse($"var value = 0 {boolean.ToSourceString()} 0 {mathematical.ToSourceString()} 0;");
+        var program = Parse($"var value = 0 {comparison.ToSourceString()} 0 {mathematical.ToSourceString()} 0;");
 
         Assert.That(program.Statements, Has.Exactly(1).TypeOf<DefinitionStatement>()
                                            .And.Property("Value")
-                                           .Matches<BinaryOperationExpression>(e => e.Operation == boolean));
+                                           .Matches<BinaryOperationExpression>(e => e.Operation == comparison));
     }
 
     [Test]
-    public void BinaryBooleanOperator_HasPrecedenceOver_PrecedingMathematicalOperator(
-        [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.BinaryBoolean))] OperatorType boolean,
-        [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.Mathematical ))] OperatorType mathematical)
+    public void ComparisonOperator_HasPrecedenceOver_PrecedingMathematicalOperator(
+        [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.Comparison  ))] OperatorType comparison,
+        [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.Mathematical))] OperatorType mathematical)
     {
-        var program = Parse($"var value = 0 {mathematical.ToSourceString()} 0 {boolean.ToSourceString()} 0;");
+        var program = Parse($"var value = 0 {mathematical.ToSourceString()} 0 {comparison.ToSourceString()} 0;");
 
         Assert.That(program.Statements, Has.Exactly(1).TypeOf<DefinitionStatement>()
                                            .And.Property("Value")
-                                           .Matches<BinaryOperationExpression>(e => e.Operation == boolean));
+                                           .Matches<BinaryOperationExpression>(e => e.Operation == comparison));
     }
 }

@@ -35,39 +35,6 @@ public class InvalidOperationException(OperatorType operation, OperatorType? exp
 
 public static class OperatorTypeExtensions
 {
-
-#region Validation
-    
-    public static OperatorType CheckBoolean(this OperatorType operation)
-    {
-        if (!IsBooleanOperation(operation)) throw new InvalidOperationException(operation, message: $"Expected boolean operation not {operation}.");
-
-        return operation;
-    }
-
-    public static OperatorType CheckMathematical(this OperatorType operation)
-    {
-        if (!IsMathemeticalOperation(operation)) throw new InvalidOperationException(operation, message: $"Expected mathematical operation not {operation}.");
-
-        return operation;
-    }
-
-    public static OperatorType CheckUnary(this OperatorType operation)
-    {
-        if (!IsUnaryOperation(operation)) throw new InvalidOperationException(operation, message: $"Expected unary operation not {operation}.");
-
-        return operation;
-    }
-
-    public static OperatorType CheckEquals(this OperatorType operation, OperatorType expected)
-    {
-        if (operation != expected) throw new InvalidOperationException(operation, expected);
-
-        return operation;
-    }
-
-#endregion
-
 #region Attributes
 
     public static bool IsLogicalOperation(this OperatorType type)
@@ -95,7 +62,7 @@ public static class OperatorTypeExtensions
         };
     }
 
-    public static bool IsBooleanOperation(this OperatorType type)
+    public static bool IsComparisonOperation(this OperatorType type)
     {
         return type switch
         {

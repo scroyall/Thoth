@@ -8,11 +8,8 @@ public static class OperatorValueSources
     public static IEnumerable<OperatorType> Mathematical
         => Operators.Where(o => o.IsMathemeticalOperation());
 
-    public static IEnumerable<OperatorType> Boolean
-        => Operators.Where(o => o.IsBooleanOperation());
-
-    public static IEnumerable<OperatorType> BinaryBoolean
-        => Boolean.Where(o => !o.IsUnaryOperation());
+    public static IEnumerable<OperatorType> Comparison
+        => Operators.Where(o => o.IsComparisonOperation());
 
     public static IEnumerable<OperatorType> Logical
         => Operators.Where(o => o.IsLogicalOperation());
