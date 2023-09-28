@@ -7,7 +7,7 @@ public class DefinitionTests
     : ParserTests
 {
     [Test]
-    public void DefinitionStatement_Parses_WhenVariableTypeIsUnresolved_AndExpressionIsLiteral([Values] BasicType type)
+    public void VariableDefinitionStatement_Parses_WhenVariableTypeIsUnresolved_AndExpressionIsLiteral([Values] BasicType type)
     {
         if (type == BasicType.String)  Assert.Ignore("String literal assignment is not implemented.");
 
@@ -20,17 +20,17 @@ public class DefinitionTests
         );
 
         Assert.That(program.Statements, Has.Count.EqualTo(1), "Expected exactly one statement.");
-        Assert.That(program.Statements, Has.Exactly(1).TypeOf<DefinitionStatement>()
+        Assert.That(program.Statements, Has.Exactly(1).TypeOf<VariableDefinitionStatement>()
                                            .With.Property("Type").EqualTo(type),
                                            $"Expected definition statement of resolved type {type}.");
-        Assert.That(program.Statements, Has.Exactly(1).TypeOf<DefinitionStatement>()
+        Assert.That(program.Statements, Has.Exactly(1).TypeOf<VariableDefinitionStatement>()
                                            .With.Property("Value")
                                            .With.Property("Type").EqualTo(type),
                                            $"Expected definition statement with value of resolved type {type}.");
     }
 
     [Test]
-    public void DefinitionStatement_Parses_WhenVariableTypeIsUnresolved_AndExpressionTypeIsUnresolved()
+    public void VariableDefinitionStatement_Parses_WhenVariableTypeIsUnresolved_AndExpressionTypeIsUnresolved()
     {
         var program = Parse(
             Fakes.Keyword(KeywordType.Var),
@@ -41,17 +41,17 @@ public class DefinitionTests
         );
 
         Assert.That(program.Statements, Has.Count.EqualTo(1), "Expected exactly one statement.");
-        Assert.That(program.Statements, Has.Exactly(1).TypeOf<DefinitionStatement>()
+        Assert.That(program.Statements, Has.Exactly(1).TypeOf<VariableDefinitionStatement>()
                                            .With.Property("Type").EqualTo(null),
                                            $"Expected definition statement of unresolved type.");
-        Assert.That(program.Statements, Has.Exactly(1).TypeOf<DefinitionStatement>()
+        Assert.That(program.Statements, Has.Exactly(1).TypeOf<VariableDefinitionStatement>()
                                            .With.Property("Value")
                                            .With.Property("Type").EqualTo(null),
                                            $"Expected definition statement with value of unresolved type.");
     }
 
     [Test]
-    public void DefinitionStatement_Parses_WhenVariableTypeIsResolved_AndExpressionIsMatchingLiteral([Values] BasicType type)
+    public void VariableDefinitionStatement_Parses_WhenVariableTypeIsResolved_AndExpressionIsMatchingLiteral([Values] BasicType type)
     {
         if (type == BasicType.String)  Assert.Ignore("String literal assignment is not implemented.");
 
@@ -64,17 +64,17 @@ public class DefinitionTests
         );
 
         Assert.That(program.Statements, Has.Count.EqualTo(1), "Expected exactly one statement.");
-        Assert.That(program.Statements, Has.Exactly(1).TypeOf<DefinitionStatement>()
+        Assert.That(program.Statements, Has.Exactly(1).TypeOf<VariableDefinitionStatement>()
                                            .With.Property("Type").EqualTo(type),
                                            $"Expected definition statement with resolved type {type}.");
-        Assert.That(program.Statements, Has.Exactly(1).TypeOf<DefinitionStatement>()
+        Assert.That(program.Statements, Has.Exactly(1).TypeOf<VariableDefinitionStatement>()
                                            .With.Property("Value")
                                            .With.Property("Type").EqualTo(type),
                                            $"Expected definition statement with value of resolved type {type}.");
     }
 
     [Test]
-    public void DefinitionStatement_Parses_WhenVariableTypeIsResolved_AndExpressionTypeIsUnresolved([Values] BasicType type)
+    public void VariableDefinitionStatement_Parses_WhenVariableTypeIsResolved_AndExpressionTypeIsUnresolved([Values] BasicType type)
     {
         var program = Parse(
             Fakes.Type(type),
@@ -85,10 +85,10 @@ public class DefinitionTests
         );
 
         Assert.That(program.Statements, Has.Count.EqualTo(1), "Expected exactly one statement.");
-        Assert.That(program.Statements, Has.Exactly(1).TypeOf<DefinitionStatement>()
+        Assert.That(program.Statements, Has.Exactly(1).TypeOf<VariableDefinitionStatement>()
                                            .With.Property("Type").EqualTo(type),
                                            $"Expected definition statement with resolved type {type}.");
-        Assert.That(program.Statements, Has.Exactly(1).TypeOf<DefinitionStatement>()
+        Assert.That(program.Statements, Has.Exactly(1).TypeOf<VariableDefinitionStatement>()
                                            .With.Property("Value")
                                            .With.Property("Type").EqualTo(null),
                                            $"Expected definition statement with value of unresolved type.");

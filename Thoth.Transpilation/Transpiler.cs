@@ -98,13 +98,30 @@ public class Transpiler
     {
         WriteLine("section .text");
         WriteLine();
+        Indent();
+
+        WriteCommentLine("functions");
+        WriteLine();
+        GenerateFunctions();
+        WriteLine();
 
         WriteLabelLine("_start");
 
-        Indent();
         GenerateStatements(Program.Statements);
         GenerateDefaultExit();
         Outdent();
+    }
+
+    private void GenerateFunctions()
+    {
+        foreach (var function in Program.Functions.Values)
+        {
+            WriteCommentLine(function);
+
+            WriteLabelLine(GetFunctionLabel(function.Name));
+            GenerateStatements(function.Statements);
+            WriteLine("ret");
+        }
     }
 
     private void GenerateDefaultExit()
@@ -143,7 +160,7 @@ public class Transpiler
                 // Test the result of the condition expression and break out of the loop if it's zero.
                 GenerateTestZero(breakLabel);
             },
-            generateLoopBody: () => TryGenerateStatement(loop.Statement)
+            generateLoopBody: () => TryGenerateStatement(loop.Body)
         );
     }
 
@@ -177,7 +194,7 @@ public class Transpiler
         var label = $"{NextLabel}conditional";
         GenerateTestZero(label);
 
-        TryGenerateStatement(conditional.Statement);
+        TryGenerateStatement(conditional.Body);
 
         WriteLine($"{label}:");
     }
@@ -221,7 +238,7 @@ public class Transpiler
         WriteLine("syscall");
     }
 
-    protected void GenerateStatement(DefinitionStatement definition)
+    protected void GenerateStatement(VariableDefinitionStatement definition)
     {
         WriteCommentLine(definition);
 
@@ -232,6 +249,11 @@ public class Transpiler
         expressionType.CheckMatches(definition.Type);
 
         PushDefinedVariable(definition.Type ?? expressionType, definition.Identifier);
+    }
+
+    protected void GenerateStatement(FunctionDefinitionStatement definition)
+    {
+        WriteCommentLine($"function {definition.Name} definition");
     }
 
     protected void GenerateStatement(EnumeratorStatement enumerator)
@@ -372,6 +394,16 @@ public class Transpiler
         WriteLine("mov rax, SYSCALL_WRITE");
         WriteLine("mov rdi, STDOUT");
         WriteLine("syscall");
+    }
+
+    protected void GenerateStatement(FunctionCallStatement call)
+    {
+        WriteCommentLine(call);
+
+        if (!Program.Functions.Keys.Contains(call.Name)) throw new UndefinedFunctionException(call.Name);
+
+        var label = GetFunctionLabel(call.Name);
+        WriteLine($"call {label}");
     }
 
     #endregion
@@ -829,4 +861,11 @@ public class Transpiler
     }
 
     #endregion
+
+    #region Functions
+
+    private string GetFunctionLabel(string name)
+        => $"function_{name}";
+
+#endregion
 }

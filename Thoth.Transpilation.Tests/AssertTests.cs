@@ -1,16 +1,14 @@
-using Thoth.Parsing;
-
 namespace Thoth.Transpilation.Tests;
 
-class AssertStatementTests
+class AssertTests
     : TranspilerTests
 {
     [Test]
     public void AssertStatement_DoesNotThrow_WhenConditionTypeIsBoolean()
     {
-        Transpile(
-            Fakes.Assert(condition: Fakes.Boolean)
-        );
+        Program.FakeAssertStatement(condition: Program.FakeExpression(BasicType.Boolean));
+
+        Transpile();
     }
 
     [Test]
@@ -19,16 +17,16 @@ class AssertStatementTests
     {
         if (type == BasicType.Boolean) Assert.Ignore("Type is boolean.");
 
-        Assert.Throws<MismatchedTypeException>(() => Transpile(
-            Fakes.Assert(condition: Fakes.Expression(type))
-        ));
+        Program.FakeAssertStatement(condition: Program.FakeExpression(type));
+
+        Assert.Throws<MismatchedTypeException>(Transpile);
     }
 
     [Test]
     public void AssertStatement_ThrowsUnresolvedTypeException_WhenConditionTypeIsUnresolved()
     {
-        Assert.Throws<UnresolvedTypeException>(() => Transpile(
-            Fakes.Assert(condition: Fakes.Expression(Fakes.UnresolvedType))
-        ));
+        Program.FakeAssertStatement(condition: Program.FakeUnresolvedExpression());
+
+        Assert.Throws<UnresolvedTypeException>(Transpile);
     }
 }

@@ -8,7 +8,10 @@ using Tokenization.Tokens;
 using Utils;
 
 public class UnexpectedTokenException(Token token)
-    : Exception($"Unexpected token '{token}'.");
+    : Exception($"Unexpected token '{token}' at {token.Source}.");
+
+public class MultiplyDefinedFunctionException(string name)
+    : Exception($"Function '{name}' is already defined.");
 
 public class Parser
 {
@@ -20,22 +23,26 @@ public class Parser
 
     private IReadOnlyList<string> Strings => _strings ?? throw new NullReferenceException();
 
+    private List<Statement> Statements { get; } = [];
+
+    private Dictionary<string, DefinedFunction> Functions { get; } = [];
+
     public ParsedProgram Parse(TokenizedProgram program)
     {
         // Reset cursor back to the first token.
         _tokens = new AtomStack<Token>(program.Tokens);
         _strings = program.Strings;
 
-        // Create a list to hold parsed expressions.
-        var statements = new List<Statement>();
+        Statements.Clear();
+        Functions.Clear();
 
         // Repeatedly parse statements until there are no tokens left.
         while (Tokens.Peek() is not null)
         {
-            statements.Add(ParseStatement());
+            Statements.Add(ParseStatement());
         }
 
-        return new ParsedProgram(statements, Strings);
+        return new ParsedProgram(Statements, Strings, Functions);
     }
 
     private Statement ParseStatement()
@@ -45,7 +52,7 @@ public class Parser
             KeywordToken keyword => ParseKeyword(keyword),
             SymbolToken symbol   => ParseSymbol(symbol),
             IdentifierToken      => ParseIdentifier(),
-            TypeToken            => ParseDefinition(),
+            TypeToken            => ParseVariableDefinition(),
             { } token => throw new UnexpectedTokenException(token),
             null => throw new UnexpectedEndOfInputException()
         };
@@ -55,13 +62,14 @@ public class Parser
     {
         return keyword.Type switch
         {
-            KeywordType.Exit   => ParseExit(),
-            KeywordType.Var    => ParseDefinition(),
-            KeywordType.If     => ParseConditional(),
-            KeywordType.While  => ParseWhile(),
-            KeywordType.For    => ParseFor(),
-            KeywordType.Assert => ParseAssert(),
-            KeywordType.Print  => ParsePrint(),
+            KeywordType.Exit     => ParseExit(),
+            KeywordType.Var      => ParseVariableDefinition(),
+            KeywordType.If       => ParseConditional(),
+            KeywordType.While    => ParseWhile(),
+            KeywordType.For      => ParseFor(),
+            KeywordType.Assert   => ParseAssert(),
+            KeywordType.Print    => ParsePrint(),
+            KeywordType.Function => ParseFunctionDefinition(),
             _ => throw new UnexpectedTokenException(keyword)
         };
     }
@@ -81,9 +89,21 @@ public class Parser
         return Tokens.Peek(1) switch
         {
             SymbolToken { Type: SymbolType.Equals } => ParseAssignment(),
+            SymbolToken { Type: SymbolType.LeftParenthesis } => ParseFunctionCall(),
             { } token => throw new UnexpectedTokenException(token),
             _ => throw new UnexpectedEndOfInputException()
         };
+    }
+
+    private FunctionCallStatement ParseFunctionCall()
+    {
+        var identifier = ConsumeToken<IdentifierToken>();
+
+        ConsumeSymbol(SymbolType.LeftParenthesis);
+        ConsumeSymbol(SymbolType.RightParenthesis);
+        ConsumeSymbol(SymbolType.Semicolon);
+
+        return new FunctionCallStatement(identifier.Name, identifier.Source);
     }
 
     private AssignmentStatement ParseAssignment()
@@ -99,9 +119,9 @@ public class Parser
         return new AssignmentStatement(identifier.Name, expression, identifier.Source);
     }
 
-    private ScopeStatement ParseScope()
+    private List<Statement> ParseBlock(out SourceReference source)
     {
-        var leftBrace = ConsumeSymbol(SymbolType.LeftBrace);
+        source = ConsumeSymbol(SymbolType.LeftBrace).Source;
 
         var statements = new List<Statement>();
         while (Tokens.Peek() is not SymbolToken { Type: SymbolType.RightBrace })
@@ -111,7 +131,14 @@ public class Parser
 
         ConsumeSymbol(SymbolType.RightBrace);
 
-        return new ScopeStatement(statements, leftBrace.Source);
+        return statements;
+    }
+
+    private ScopeStatement ParseScope()
+    {
+        var statements = ParseBlock(out var source);
+
+        return new ScopeStatement(statements, source);
     }
 
     private ExitStatement ParseExit()
@@ -124,10 +151,10 @@ public class Parser
         ConsumeSymbol(SymbolType.RightParenthesis);
         ConsumeSymbol(SymbolType.Semicolon);
 
-        return new ExitStatement(code: expression, source: exit.Source);
+        return new ExitStatement(expression, exit.Source);
     }
 
-    private DefinitionStatement ParseDefinition()
+    private VariableDefinitionStatement ParseVariableDefinition()
     {
         var type = ParseType(out var source);
 
@@ -140,7 +167,22 @@ public class Parser
 
         ConsumeSymbol(SymbolType.Semicolon);
 
-        return new DefinitionStatement(type ?? expression.Type, identifier.Name, expression, source);
+        return new VariableDefinitionStatement(type ?? expression.Type, identifier.Name, expression, source);
+    }
+
+    private FunctionDefinitionStatement ParseFunctionDefinition()
+    {
+        ConsumeKeyword(KeywordType.Function);
+
+        var identifier = ConsumeToken<IdentifierToken>();
+
+        ConsumeSymbol(SymbolType.LeftParenthesis);
+        ConsumeSymbol(SymbolType.RightParenthesis);
+
+        var statements = ParseBlock(out var _);
+
+        DefineFunction(identifier.Name, statements, identifier.Source);
+        return new FunctionDefinitionStatement(identifier.Name, identifier.Source);
     }
 
     private BasicType? ParseType(out SourceReference source)
@@ -453,5 +495,14 @@ public class Parser
             default:
                 return 0; // Other symbols are not binary operators and have no precedence.
         }
+    }
+
+    private int DefineFunction(string name, List<Statement> statements, SourceReference source)
+    {
+        if (Functions.ContainsKey(name)) throw new MultiplyDefinedFunctionException(name);
+
+        Functions[name] = new DefinedFunction(name, statements, source);
+
+        return Functions.Count - 1;
     }
 }

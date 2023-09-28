@@ -20,11 +20,11 @@ public class NotOperatorTests
         );
 
         Assume.That(program.Statements, Has.Count.EqualTo(1), "Expected exactly one statement.");
-        Assume.That(program.Statements, Has.Exactly(1).TypeOf<DefinitionStatement>()
+        Assume.That(program.Statements, Has.Exactly(1).TypeOf<VariableDefinitionStatement>()
                                            .With.Property("Type").EqualTo(BasicType.Boolean),
                                            "Expected definition statement of boolean type.");
 
-        var definition = program.Statements[0] as DefinitionStatement ?? throw new NullReferenceException();
+        var definition = program.Statements[0] as VariableDefinitionStatement ?? throw new NullReferenceException();
         Assert.That(definition.Value, Is.TypeOf<UnaryOperationExpression>()
                                         .With.Property("Operation").EqualTo(OperatorType.Not),
                                         "Expected unary expression for not operation.");
@@ -43,11 +43,11 @@ public class NotOperatorTests
         );
 
         Assume.That(program.Statements, Has.Count.EqualTo(1), "Expected exactly one statement.");
-        Assume.That(program.Statements, Has.Exactly(1).TypeOf<DefinitionStatement>()
+        Assume.That(program.Statements, Has.Exactly(1).TypeOf<VariableDefinitionStatement>()
                                            .With.Property("Type").EqualTo(BasicType.Boolean),
                                            "Expected definition statement of boolean type.");
 
-        var definition = program.Statements[0] as DefinitionStatement ?? throw new NullReferenceException();
+        var definition = program.Statements[0] as VariableDefinitionStatement ?? throw new NullReferenceException();
         Assert.That(definition.Value, Is.TypeOf<UnaryOperationExpression>()
                                         .With.Property("Operation").EqualTo(OperatorType.Not),
                                         "Expected unary expression for not operation.");

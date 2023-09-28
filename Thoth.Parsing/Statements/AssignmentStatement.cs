@@ -3,21 +3,9 @@ using Thoth.Tokenization;
 
 namespace Thoth.Parsing.Statements;
 
-public class AssignmentStatement
-    : Statement
+public record AssignmentStatement(string Identifier, Expression Value, SourceReference Source)
+    : Statement(Source)
 {
-    public string Identifier { get; }
-    public Expression Value { get; }
-
-    public AssignmentStatement(string identifier, Expression value, SourceReference source)
-        : base(source)
-    {
-        Identifier = identifier;
-        Value = value;
-    }
-
     protected override string ArgumentsToString()
-    {
-        return $"Identifier={Identifier}, Value={Value}";
-    }
+        => $"{Identifier} = {Value}";
 }

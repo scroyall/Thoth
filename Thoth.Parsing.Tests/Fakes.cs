@@ -21,8 +21,13 @@ public static class Fakes
     public static BooleanLiteralToken BooleanLiteral
         => new(true, SourceReference);
     
-    public static IdentifierToken Identifier(string name = "fake")
-        => new(name, SourceReference);
+    public static IdentifierToken Identifier(string? name = null)
+        => new(name ?? IdentifierName, SourceReference);
+
+    private static int IdentifierCount = 0;
+
+    public static string IdentifierName
+        => $"identifier{++IdentifierCount}";
 
     public static IntegerLiteralToken IntegerLiteral
         => new(0, SourceReference);

@@ -1,4 +1,3 @@
-using Thoth.Parsing;
 using Thoth.Parsing.Expressions;
 
 namespace Thoth.Transpilation.Tests;
@@ -9,10 +8,17 @@ public class NotOperationTests
     [Test]
     public void Transpiles_NotOperation_WhenValueIsBoolean()
     {
-        Transpile(
-            Fakes.Definition(null,
-                expression: new UnaryOperationExpression(BasicType.Boolean, OperatorType.Not,
-                    value: Fakes.Boolean))
+        // TODO: Replace variable definition with a fake expression generator.
+        Program.FakeVariableDefinitionStatement(
+            value: new UnaryOperationExpression(
+                BasicType.Boolean,
+                OperatorType.Not,
+                Program.FakeExpression(BasicType.Boolean)
+            )
         );
+
+        Transpile();
     }
+
+    // TODO: Add test for non-boolean value.
 }

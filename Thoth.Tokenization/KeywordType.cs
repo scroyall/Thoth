@@ -9,7 +9,8 @@ public enum KeywordType
     For,
     In,
     Assert,
-    Print
+    Print,
+    Function
 }
 
 public static class KeywordExtensions

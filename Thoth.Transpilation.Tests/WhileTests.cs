@@ -1,16 +1,14 @@
-using Thoth.Parsing;
-
 namespace Thoth.Transpilation.Tests;
 
-class WhileStatementTests
+class WhileTests
     : TranspilerTests
 {
     [Test]
     public void WhileStatement_DoesNotThrow_WhenConditionTypeIsBoolean()
     {
-        Transpile(
-            Fakes.While(condition: Fakes.Boolean)
-        );
+        Program.FakeWhileStatement(condition: Program.FakeExpression(BasicType.Boolean));
+
+        Transpile();
     }
 
     [Test]
@@ -19,16 +17,16 @@ class WhileStatementTests
     {
         if (type == BasicType.Boolean) Assert.Ignore("Type is boolean.");
 
-        Assert.Throws<MismatchedTypeException>(() => Transpile(
-            Fakes.While(condition: Fakes.Expression(type))
-        ));
+        Program.FakeWhileStatement(condition: Program.FakeExpression(type));
+
+        Assert.Throws<MismatchedTypeException>(Transpile);
     }
 
     [Test]
     public void WhileStatement_ThrowsUnresolvedTypeException_WhenConditionTypeIsUnresolved()
     {
-        Assert.Throws<UnresolvedTypeException>(() => Transpile(
-            Fakes.While(condition: Fakes.Expression(Fakes.UnresolvedType))
-        ));
+        Program.FakeWhileStatement(condition: Program.FakeUnresolvedExpression());
+
+        Assert.Throws<UnresolvedTypeException>(Transpile);
     }
 }

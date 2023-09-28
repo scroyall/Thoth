@@ -16,6 +16,9 @@ public class UnexpectedExpressionException(Expression expression)
 public class UndefinedVariableException(string identifier)
     : Exception($"Undefined variable '{identifier}'.");
 
+public class UndefinedFunctionException(string identifier)
+    : Exception($"Undefined function '{identifier}'.");
+
 public class MultiplyDefinedVariableException(string identifier)
     : Exception($"Variable '{identifier}' is already defined.");
 

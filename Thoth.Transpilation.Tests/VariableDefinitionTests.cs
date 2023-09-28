@@ -1,24 +1,22 @@
-using Thoth.Parsing;
-
 namespace Thoth.Transpilation.Tests;
 
-public class DefinitionStatementTests
+public class VariableDefinitionTests
     : TranspilerTests
 {
     [Test]
     public void DefinitionStatement_Transpiles_WhenExpressionTypeEqualsVariableType([Values] BasicType type)
     {
-        Transpile(
-            Fakes.Definition(type)
-        );
+        Program.FakeVariableDefinitionStatement(type);
+
+        Transpile();
     }
 
     [Test]
     public void DefinitionStatement_Transpiles_WhenVariableTypeIsUnresolved([Values] BasicType expressionType)
     {
-        Transpile(
-            Fakes.Definition(null, expression: Fakes.Expression(expressionType))
-        );
+        Program.FakeVariableDefinitionStatement(value: Program.FakeExpression(expressionType));
+        
+        Transpile();
     }
 
     [Test]
@@ -28,8 +26,8 @@ public class DefinitionStatementTests
     {
         if (expressionType.Matches(variableType)) Assert.Ignore("Expression type matches variable type.");
 
-        Assert.Throws<MismatchedTypeException>(() => Transpile(
-            Fakes.Definition(variableType, expression: Fakes.Expression(expressionType))
-        ));
+        Program.FakeVariableDefinitionStatement(type: variableType, value: Program.FakeExpression(expressionType));
+
+        Assert.Throws<MismatchedTypeException>(Transpile);
     }
 }

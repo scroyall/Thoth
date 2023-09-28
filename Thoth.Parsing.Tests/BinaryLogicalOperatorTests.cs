@@ -25,11 +25,11 @@ public class LogicalOperatorTests
         var program = Parse(Fakes.Program(tokens));
 
         Assert.That(program.Statements, Has.Count.EqualTo(1), "Expected exactly one statement.");
-        Assert.That(program.Statements, Has.Exactly(1).TypeOf<DefinitionStatement>()
+        Assert.That(program.Statements, Has.Exactly(1).TypeOf<VariableDefinitionStatement>()
                                            .With.Property("Type").EqualTo(BasicType.Boolean),
                                            "Expected definition statement of boolean type.");
 
-        var definition = program.Statements[0] as DefinitionStatement ?? throw new NullReferenceException();
+        var definition = program.Statements[0] as VariableDefinitionStatement ?? throw new NullReferenceException();
         Assert.That(definition.Value, Is.TypeOf<BinaryOperationExpression>()
                                         .With.Property("Operation").EqualTo(operation),
                                         $"Expected binary expression for operation {operation}.");
@@ -52,11 +52,11 @@ public class LogicalOperatorTests
         var program = Parse(Fakes.Program(tokens));
 
         Assert.That(program.Statements, Has.Count.EqualTo(1), "Expected exactly one statement.");
-        Assert.That(program.Statements, Has.Exactly(1).TypeOf<DefinitionStatement>()
+        Assert.That(program.Statements, Has.Exactly(1).TypeOf<VariableDefinitionStatement>()
                                            .With.Property("Type").EqualTo(BasicType.Boolean).Or.Null,
                                            "Expected definition statement of boolean type.");
 
-        var definition = program.Statements[0] as DefinitionStatement ?? throw new NullReferenceException();
+        var definition = program.Statements[0] as VariableDefinitionStatement ?? throw new NullReferenceException();
         Assert.That(definition.Value, Is.TypeOf<BinaryOperationExpression>()
                                         .With.Property("Operation").EqualTo(operation),
                                         $"Expected binary expression for operation {operation}.");

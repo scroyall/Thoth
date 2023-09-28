@@ -1,16 +1,8 @@
-using System.Diagnostics;
-
-using Thoth.Parsing;
-using Thoth.Tokenization;
-using Thoth.Transpilation;
-using Thoth.Utils;
-
 namespace Thoth.Tests;
 
 public class FileTests
+    : CompilerTests
 {
-    private static string OutputDirectory => Path.Join(TestContext.CurrentContext.TestDirectory, "TestOutput");
-
     private static IEnumerable<string> Files(string directory)
     {
         return Directory.EnumerateFiles(directory);
@@ -39,54 +31,21 @@ public class FileTests
             var fileName = Path.GetFileNameWithoutExtension(filePath);
             var exitCode = int.Parse(fileName.Split('_').Last());
 
-            yield return new TestCaseData(filePath).Returns(exitCode);
+            yield return new TestCaseData(filePath).SetName($"{{m}}({fileName})").Returns(exitCode);
         }
-    }
-
-    [OneTimeSetUp]
-    public void OneTimeSetUp()
-    {
-        if (Directory.Exists(OutputDirectory))
-        {
-            Directory.Delete(OutputDirectory, true);            
-        }
-
-        Directory.CreateDirectory(OutputDirectory);
     }
 
     [Test]
     [TestCaseSource(nameof(CompilationTestCases))]
     public void CompilesAndRuns(string path)
     {
-        Assert.That(CompileAndRun(path), Is.EqualTo(0), "Expected exit with code zero.");
+        Assert.That(CompileAndRunFile(path).ExitCode, Is.EqualTo(0), "Expected exit with code zero.");
     }
 
     [Test]
     [TestCaseSource(nameof(ExitCodeTestCases))]
     public int CompilesAndExitsWithCode(string path)
     {
-        return CompileAndRun(path);
-    }
-
-    private int CompileAndRun(string filePath)
-    {
-        var inputFileText = File.ReadAllText(filePath);
-
-        var tokenized = new Tokenizer().Tokenize(inputFileText);
-        var parsed = new Parser().Parse(tokenized);
-        var transpiler = new Transpiler();
-
-        var asmFilePath = Path.Join(OutputDirectory, Path.GetFileNameWithoutExtension(filePath) + ".th");
-        using (var file = new FileStream(asmFilePath, FileMode.CreateNew))
-        {
-            transpiler.Transpile(parsed, file);
-        }
-
-        var executableFilePath = Compilation.CompileAndLink(asmFilePath);
-        var executableDirectoryPath = Path.GetDirectoryName(executableFilePath);
-
-        var process = Process.Start(new ProcessStartInfo(executableFilePath) { WorkingDirectory = executableDirectoryPath }) ?? throw new Exception("Failed to start process.");
-        process.WaitForExit(TimeSpan.FromSeconds(1));
-        return process.ExitCode;
+        return CompileAndRunFile(path).ExitCode;
     }
 }

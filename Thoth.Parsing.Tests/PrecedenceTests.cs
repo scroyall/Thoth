@@ -15,7 +15,7 @@ public class PrecedenceTests
     {
         var program = Parse($"var value = 0 {comparison.ToSourceString()} 0 {mathematical.ToSourceString()} 0;");
 
-        Assert.That(program.Statements, Has.Exactly(1).TypeOf<DefinitionStatement>()
+        Assert.That(program.Statements, Has.Exactly(1).TypeOf<VariableDefinitionStatement>()
                                            .And.Property("Value")
                                            .Matches<BinaryOperationExpression>(e => e.Operation == comparison));
     }
@@ -27,7 +27,7 @@ public class PrecedenceTests
     {
         var program = Parse($"var value = 0 {mathematical.ToSourceString()} 0 {comparison.ToSourceString()} 0;");
 
-        Assert.That(program.Statements, Has.Exactly(1).TypeOf<DefinitionStatement>()
+        Assert.That(program.Statements, Has.Exactly(1).TypeOf<VariableDefinitionStatement>()
                                            .And.Property("Value")
                                            .Matches<BinaryOperationExpression>(e => e.Operation == comparison));
     }

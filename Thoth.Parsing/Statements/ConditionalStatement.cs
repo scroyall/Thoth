@@ -4,19 +4,9 @@ namespace Thoth.Parsing.Statements;
 
 using Expressions;
 
-public class ConditionalStatement
-    : Statement
+public record ConditionalStatement(Expression Condition, Statement Body, SourceReference Source)
+    : Statement(Source)
 {
-    public readonly Expression Condition;
-    public readonly Statement Statement;
-
-    public ConditionalStatement(Expression condition, Statement statement, SourceReference source)
-        : base(source)
-    {
-        Condition = condition;
-        Statement = statement;
-    }
-
     protected override string ArgumentsToString()
-        => $"Condition={Condition}, Statement={Statement}";
+        => $"if {Condition} then {Body}";
 }

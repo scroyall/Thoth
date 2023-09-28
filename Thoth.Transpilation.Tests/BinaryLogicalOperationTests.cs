@@ -10,20 +10,34 @@ public class BinaryLogicalOperationTests
     public void BinaryLogicalOperation_Transpiles_WhenValuesAreBoolean(
         [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.BinaryLogical))] OperatorType operation)
     {
-        Transpile(
-            Fakes.Definition(null,
-                expression: new BinaryOperationExpression(BasicType.Boolean, operation, left: Fakes.Boolean, right: Fakes.Boolean)));
+        // TODO: Replace variable definition with a fake expression generator.
+        Program.FakeVariableDefinitionStatement(
+            value: new BinaryOperationExpression(
+                BasicType.Boolean,
+                operation,
+                left: Program.FakeExpression(BasicType.Boolean),
+                right: Program.FakeExpression(BasicType.Boolean)
+            )
+        );
+
+        Transpile();
     }
 
     [Test]
     public void BinaryLogicalOperation_ThrowsException_WhenValuesAreUnresolved(
         [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.BinaryLogical))] OperatorType operation)
     {
-        Assert.Throws<UnresolvedTypeException>(() => Transpile(
-            Fakes.Definition(null,
-                expression: new BinaryOperationExpression(BasicType.Boolean, operation,
-                    left: Fakes.Expression(Fakes.UnresolvedType),
-                    right: Fakes.Expression(Fakes.UnresolvedType)))));
+        // TODO: Replace variable definition with a fake expression generator.
+        Program.FakeVariableDefinitionStatement(
+            value: new BinaryOperationExpression(
+                BasicType.Boolean,
+                operation,
+                left: Program.FakeUnresolvedExpression(),
+                right: Program.FakeUnresolvedExpression()
+            )
+        );
+
+        Assert.Throws<UnresolvedTypeException>(Transpile);
     }
     
     [Test]
@@ -34,10 +48,16 @@ public class BinaryLogicalOperationTests
     {
         if (leftType == BasicType.Boolean && rightType == BasicType.Boolean) Assert.Ignore("Values are both boolean.");
 
-        Assert.Throws<MismatchedTypeException>(() => Transpile(
-            Fakes.Definition(null,
-                expression: new BinaryOperationExpression(BasicType.Boolean, operation,
-                    left: Fakes.Expression(leftType),
-                    right: Fakes.Expression(rightType)))));
+        // TODO: Replace variable definition with a fake expression generator.
+        Program.FakeVariableDefinitionStatement(
+            value: new BinaryOperationExpression(
+                BasicType.Boolean,
+                operation,
+                left: Program.FakeExpression(leftType),
+                right: Program.FakeExpression(rightType)
+            )
+        );
+
+        Assert.Throws<MismatchedTypeException>(Transpile);
     }
 }

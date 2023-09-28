@@ -3,17 +3,9 @@ using Thoth.Tokenization;
 
 namespace Thoth.Parsing.Statements;
 
-public class PrintStatement
-    : Statement
+public record PrintStatement(Expression Expression, SourceReference Source)
+    : Statement(Source)
 {
-    public readonly Expression Expression;
-
-    public PrintStatement(Expression expression, SourceReference source)
-        : base(source)
-    {
-        Expression = expression;
-    }
-
     protected override string ArgumentsToString()
     {
         return Expression.ToString();

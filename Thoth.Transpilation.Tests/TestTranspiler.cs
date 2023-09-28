@@ -1,4 +1,3 @@
-using Thoth.Parsing;
 using Thoth.Parsing.Expressions;
 using Thoth.Parsing.Statements;
 
@@ -13,7 +12,7 @@ public class TestTranspiler
     protected override BasicType TryGenerateExpression(Expression expression)
         => GenerateExpression(expression as dynamic);
 
-    protected BasicType GenerateExpression(Fakes.FakeExpression expression)
+    protected BasicType GenerateExpression(FakeExpression expression)
     {
         // Push NUL to fake the expression value.
         WriteCommentLine("fake expression");
@@ -25,7 +24,7 @@ public class TestTranspiler
     protected override void TryGenerateStatement(Statement statement)
         => GenerateStatement(statement as dynamic);
     
-    protected void GenerateStatement(Fakes.FakeStatement statement)
+    protected void GenerateStatement(FakeStatement statement)
     {
         WriteCommentLine("fake statement");
     }

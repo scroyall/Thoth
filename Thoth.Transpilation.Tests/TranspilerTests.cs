@@ -1,6 +1,3 @@
-using Thoth.Parsing;
-using Thoth.Parsing.Statements;
-
 namespace Thoth.Transpilation.Tests;
 
 [Parallelizable]
@@ -9,12 +6,11 @@ public abstract class TranspilerTests
 {
     protected Transpiler Transpiler { get; } = new TestTranspiler();
 
+    protected FakeParsedProgram Program { get; } = new();
+
     /// <summary>
     /// Transpile a parsed program, discarding the output.
     /// </summary>
-    protected void Transpile(ParsedProgram program)
-        => Transpiler.Transpile(program, Stream.Null);
-
-    protected void Transpile(params Statement[] statements)
-        => Transpile(Fakes.Program(statements));
+    protected void Transpile()
+        => Transpiler.Transpile(Program.ToParsedProgram(), Stream.Null);
 }
