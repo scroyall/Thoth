@@ -3,11 +3,11 @@ using Thoth.Tokenization;
 
 namespace Thoth.Parsing.Statements;
 
-public record PrintStatement(Expression Expression, SourceReference Source)
+public record PrintStatement(Expression Value, SourceReference Source)
     : Statement(Source)
 {
     protected override string ArgumentsToString()
     {
-        return Expression.ToString();
+        return Value.ToString();
     }
 }

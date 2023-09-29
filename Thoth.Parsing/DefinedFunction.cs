@@ -3,4 +3,9 @@ using Thoth.Tokenization;
 
 namespace Thoth.Parsing;
 
-public record DefinedFunction(string Name, IReadOnlyList<Statement> Statements, SourceReference Source);
+public record DefinedFunction(
+    string Name,
+    BasicType? ReturnType,
+    IReadOnlyList<Statement> Body,
+    SourceReference Source
+);

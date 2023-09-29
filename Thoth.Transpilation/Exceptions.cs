@@ -4,8 +4,16 @@ using Thoth.Parsing.Statements;
 
 namespace Thoth.Transpilation;
 
-public class UnexpectedStatementException(Statement statement)
-    : Exception($"Unexpected statement '{statement}'.");
+public class UnexpectedStatementException(Statement statement, string? message = null)
+    : Exception(message ?? $"Unexpected statement '{statement}'.");
+
+public class MissingStatementException<TStatement>(string? message = null)
+    : Exception(message ?? $"Missing {typeof(TStatement).Name} statement.")
+    where TStatement : Statement;
+
+public class MissingReturnStatementException(BasicType? type)
+    : MissingStatementException<ReturnStatement>(
+        type is null ? "Missing return statement." : $"Missing return statement of type {type.Resolved().ToSourceString()}.");
 
 public class UnexpectedExpressionException(Expression expression)
     : Exception($"Unexpected expression {expression}.")
@@ -13,11 +21,17 @@ public class UnexpectedExpressionException(Expression expression)
     public readonly Expression Expression = expression;
 }
 
+public class MissingExpressionException(BasicType type)
+    : Exception($"Missing expression of type {type}.");
+
 public class UndefinedVariableException(string identifier)
     : Exception($"Undefined variable '{identifier}'.");
 
 public class UndefinedFunctionException(string identifier)
     : Exception($"Undefined function '{identifier}'.");
+
+public class InvalidFunctionException(string Message)
+    : Exception(Message);
 
 public class MultiplyDefinedVariableException(string identifier)
     : Exception($"Variable '{identifier}' is already defined.");

@@ -36,6 +36,8 @@ public class Transpiler
     /// </summary>
     private readonly Stack<int> _scopes = new();
 
+    private readonly Stack<DefinedFunction> _calls = new();
+
     /// <summary>
     /// Count of labels.
     /// </summary>
@@ -48,6 +50,7 @@ public class Transpiler
         _stackSize = 0;
         _variableDefinitions.Clear();
         _scopes.Clear();
+        _calls.Clear();
         _labels = 0;
 
         using (_writer = new StreamWriter(stream))
@@ -116,12 +119,61 @@ public class Transpiler
     {
         foreach (var function in Program.Functions.Values)
         {
-            WriteCommentLine(function);
-
-            WriteLabelLine(GetFunctionLabel(function.Name));
-            GenerateStatements(function.Statements);
-            WriteLine("ret");
+            GenerateFunction(function);
         }
+    }
+
+    private void GenerateFunction(DefinedFunction function)
+    {
+        WriteCommentLine(function);
+
+        // Write label to which execution will jump to call the function.
+        WriteLabelLine(GetFunctionEntryLabel(function.Name));
+
+        OpenScope();
+        OpenStackFrame();
+
+        // Push the function's return type on to the call stack to indicate the valid type to return statements
+        // within the function body.
+        _calls.Push(function);
+
+        var returned = GenerateStatements(function.Body);
+
+        _calls.Pop();
+
+        // Check that a return was guaranteed if the function is expected a return value.
+        if (function.ReturnType is not null && !returned) throw new MissingReturnStatementException(function.ReturnType);
+
+        WriteLabelLine(GetFunctionExitLabel(function.Name));
+
+        CloseStackFrame();
+        CloseScope();
+
+        // Return to the call site.
+        WriteLine("ret");
+    }
+
+    private void OpenStackFrame()
+    {
+        WriteCommentLine("open stack frame");
+
+        // Push the stack base pointer for the previous stack frame onto the stack for later restoration.
+        GeneratePush("rbp");
+
+        // Move the current stack pointer into the stack base pointer to create a new stack frame.
+        WriteLine("mov rbp, rsp");
+    }
+
+    private void CloseStackFrame()
+    {
+        WriteCommentLine("close stack frame");
+
+        // Move the current stack pointer back to the stack base pointer, just after the previous stack base pointer 
+        // which was previously pushed onto the stack.
+        WriteLine("mov rsp, rbp");
+
+        // Pop the previous stack base pointer off the stack, restoring the previous stack frame.
+        WriteLine("pop rbp");
     }
 
     private void GenerateDefaultExit()
@@ -134,21 +186,69 @@ public class Transpiler
 
     #region Statements
 
-    protected virtual void TryGenerateStatement(Statement statement)
+    protected virtual bool TryGenerateStatement(Statement statement)
         => GenerateStatement(statement as dynamic);
 
-    protected void GenerateStatement(Statement statement)
+    protected bool GenerateStatement(Statement statement)
         => throw new UnexpectedStatementException(statement);
 
-    protected void GenerateStatements(IEnumerable<Statement> statements)
+    protected bool GenerateStatements(IEnumerable<Statement> statements)
     {
+        // Blocks of statements don't guarantee a return by default.
+        var returned = false;
+
         foreach (var statement in statements)
         {
-            TryGenerateStatement(statement);
+            // Statements following a guaranteed return are unreachable.
+            if (returned) throw new UnexpectedStatementException(statement, $"Unexpected unreachable statement {statement}.");
+
+            returned = TryGenerateStatement(statement);
         }
+
+        return returned;
     }
 
-    protected void GenerateStatement(WhileStatement loop)
+    protected bool GenerateStatement(ReturnStatement statement)
+    {
+        WriteCommentLine(statement);
+
+        // Return statements are not valid if not in a call.
+        if (_calls.Count == 0) throw new UnexpectedStatementException(statement);
+
+        // Check if we're in a call which is expecting a return value.
+        if (_calls.Peek().ReturnType is { } type)
+        {
+            // Return statements must have a return value if the call is expecting one.
+            if (statement.Value is null) throw new MissingExpressionException(type);
+
+            // Return values must match the type the call is expecting.
+            statement.Value.Type.CheckMatches(type);
+
+            WriteCommentLine("return value");
+
+            // Generate the return value and push it on to the stack.
+            TryGenerateExpression(statement.Value);
+
+            // Pop the return value off the top of the stack.
+            GeneratePop("rax");
+
+            // Move the return value into the reserved space for it just below the
+            WriteLine("mov [rbp + 2 * 8], rax");
+        }
+        else if (statement.Value is not null)
+        {
+            // Returns statements must not have a return value is the call is not expecting one.
+            throw new UnexpectedExpressionException(statement.Value);
+        }
+
+        var label = GetFunctionExitLabel(_calls.Peek().Name);
+        WriteLine($"jmp {label}");
+
+        // Return statements always guarantee a return.
+        return true;
+    }
+
+    protected bool GenerateStatement(WhileStatement loop)
     {
         WriteCommentLine(loop);
 
@@ -162,6 +262,10 @@ public class Transpiler
             },
             generateLoopBody: () => TryGenerateStatement(loop.Body)
         );
+
+        // Even if the loop body guarantees a return, it might not be executed, so while statements can't guarantee
+        // a return.
+        return false;
     }
 
     private void GenerateConditionalLoop(Action<string> generateTest, Action generateLoopBody)
@@ -185,7 +289,7 @@ public class Transpiler
         WriteLine($"{breakLabel}:");
     }
 
-    protected void GenerateStatement(ConditionalStatement conditional)
+    protected bool GenerateStatement(ConditionalStatement conditional)
     {
         WriteCommentLine(conditional);
 
@@ -197,9 +301,13 @@ public class Transpiler
         TryGenerateStatement(conditional.Body);
 
         WriteLine($"{label}:");
+
+        // Even if the conditional body guarantees a return, it might not be executed, so conditional statements can't
+        // guarantee a return.
+        return false;
     }
 
-    protected void GenerateStatement(AssignmentStatement assignment)
+    protected bool GenerateStatement(AssignmentStatement assignment)
     {
         WriteCommentLine(assignment);
 
@@ -212,18 +320,24 @@ public class Transpiler
         // Move the result of the expression into the variable on the stack.
         var stackOffset = GetVariableStackOffset(assignment.Identifier);
         WriteLine($"mov [rsp + {stackOffset} * 8], rax");
+
+        // Assignments don't generate any statements to guarantee a return.
+        return false;
     }
 
-    protected void GenerateStatement(ScopeStatement scope)
+    protected bool GenerateStatement(ScopeStatement scope)
     {
         WriteCommentLine(scope);
 
         OpenScope();
-        GenerateStatements(scope.Statements);
+        var returned = GenerateStatements(scope.Statements);
         CloseScope();
+
+        // Scopes can guarantee a return, so pass it along.
+        return returned;
     }
 
-    protected void GenerateStatement(ExitStatement exit)
+    protected bool GenerateStatement(ExitStatement exit)
     {
         WriteCommentLine(exit);
 
@@ -236,9 +350,13 @@ public class Transpiler
 
         WriteLine("mov rax, SYSCALL_EXIT");
         WriteLine("syscall");
+
+        // Execution won't continue past this point, but exits guarantee a return to avoid requiring a return statement
+        // after an exit anyway.
+        return true;
     }
 
-    protected void GenerateStatement(VariableDefinitionStatement definition)
+    protected bool GenerateStatement(VariableDefinitionStatement definition)
     {
         WriteCommentLine(definition);
 
@@ -249,14 +367,20 @@ public class Transpiler
         expressionType.CheckMatches(definition.Type);
 
         PushDefinedVariable(definition.Type ?? expressionType, definition.Identifier);
+
+        // Variable definitions don't generate any statements to guarantee a return.
+        return false;
     }
 
-    protected void GenerateStatement(FunctionDefinitionStatement definition)
+    protected bool GenerateStatement(FunctionDefinitionStatement definition)
     {
         WriteCommentLine($"function {definition.Name} definition");
+
+        // Functions don't generate any statements, when defined, to guarantee a return.
+        return false;
     }
 
-    protected void GenerateStatement(EnumeratorStatement enumerator)
+    protected bool GenerateStatement(EnumeratorStatement enumerator)
     {
         WriteCommentLine(enumerator);
 
@@ -290,9 +414,12 @@ public class Transpiler
         );
 
         CloseScope();
+
+        // Even if the loop body guarantees a return, it might not be executed, so loops can't guarantee a return.
+        return false;
     }
 
-    protected void GenerateStatement(AssertStatement assert)
+    protected bool GenerateStatement(AssertStatement assert)
     {
         WriteCommentLine(assert);
 
@@ -311,13 +438,17 @@ public class Transpiler
         WriteLine("syscall");
 
         WriteLabelLine(label);
+
+        // Although execution stops after an assert fails, the condition might pass, so asserts can't guarantee a
+        // return.
+        return false;
     }
 
-    protected void GenerateStatement(PrintStatement print)
+    protected bool GenerateStatement(PrintStatement print)
     {
         WriteCommentLine(print);
 
-        switch (print.Expression)
+        switch (print.Value)
         {
             case StringExpression { } literal:
                 GeneratePrintStringLiteral(literal.Index);
@@ -335,6 +466,9 @@ public class Transpiler
                 }
                 break;
         }
+
+        // Prints don't generate any statements to guarantee a return.
+        return false;
     }
 
     private void GeneratePrintStringLiteral(int index)
@@ -396,14 +530,19 @@ public class Transpiler
         WriteLine("syscall");
     }
 
-    protected void GenerateStatement(FunctionCallStatement call)
+    protected bool GenerateStatement(FunctionCallStatement call)
     {
         WriteCommentLine(call);
 
-        if (!Program.Functions.Keys.Contains(call.Name)) throw new UndefinedFunctionException(call.Name);
+        var type = GenerateFunctionCall(call);
+        if (type is not null)
+        {
+            // Discard the return value from the top of the stack.
+            WriteLine("add rsp, 8");
+        }
 
-        var label = GetFunctionLabel(call.Name);
-        WriteLine($"call {label}");
+        // Function calls are a separate call, so they can't guarantee a return from the current call.
+        return false;
     }
 
     #endregion
@@ -439,6 +578,35 @@ public class Transpiler
         }
 
         return BasicType.Integer;
+    }
+
+    protected BasicType GenerateExpression(FunctionCallExpression call)
+    {
+        WriteCommentLine(call);
+
+        return GenerateFunctionCall(call) ?? throw new InvalidFunctionException($"Function '{call.Name}' must return a value when used as an expression.");
+    }
+
+    protected BasicType? GenerateFunctionCall(IFunctionCall call)
+    {
+        // Check that the function has been defined.
+        if (!IsFunctionDefined(call.Name)) throw new UndefinedFunctionException(call.Name);
+
+        // Get the function definition.
+        var definition = Program.Functions[call.Name] ?? throw new NullReferenceException();
+
+        // Reserve a stack entry for the return value, if the the function has one, just before the stack frame.
+        if (definition.ReturnType is not null)
+        {
+            WriteCommentLine("return value");
+            GeneratePush();
+        }
+
+        // Get the label for the function and execute it.
+        var label = GetFunctionEntryLabel(call.Name);
+        WriteLine($"call {label}");
+
+        return definition.ReturnType;
     }
 
     protected BasicType GenerateExpression(BooleanLiteralExpression boolean)
@@ -660,6 +828,12 @@ public class Transpiler
         WriteLine($"push {source}");
     }
 
+    protected void GeneratePush()
+    {
+        _stackSize++;
+        WriteLine("sub rsp, 1 * 8");
+    }
+
     private void GeneratePop(string destination)
     {
         if (_stackSize <= 0) throw new Exception("Stack is empty.");
@@ -864,8 +1038,14 @@ public class Transpiler
 
     #region Functions
 
-    private string GetFunctionLabel(string name)
-        => $"function_{name}";
+    private string GetFunctionEntryLabel(string name)
+        => $"function_{name}_entry";
+
+    private string GetFunctionExitLabel(string name)
+        => $"function_{name}_exit";
+
+    private bool IsFunctionDefined(string name)
+        => Program.Functions.ContainsKey(name);
 
 #endregion
 }

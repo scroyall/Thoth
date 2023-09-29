@@ -5,7 +5,7 @@ using Thoth.Tokenization;
 
 namespace Thoth.Transpilation.Tests;
 
-public class FakeExpression(BasicType? type)
+public record FakeExpression(BasicType? type)
     : Expression(type);
 
 public record FakeStatement()
@@ -21,11 +21,12 @@ public class FakeParsedProgram
 
     public int NameCount = 0;
 
-    public DefinedFunction FakeDefinedFunction(string? name = null)
+    public DefinedFunction FakeDefinedFunction(string? name = null, BasicType? returnType = null, List<Statement>? statements = null)
     {
         var defined = new DefinedFunction(
             name ?? $"function{++NameCount}",
-            FakeStatements(),
+            returnType,
+            statements ?? FakeStatements(),
             FakeSourceReference
         );
 
@@ -50,8 +51,8 @@ public class FakeParsedProgram
     public FakeStatement FakeStatement()
         => new();
 
-    public List<FakeStatement> FakeStatements(int count = 3)
-        => Enumerable.Repeat(FakeStatement(), count).ToList();
+    public List<Statement> FakeStatements(int count = 3)
+        => Enumerable.Repeat(FakeStatement() as Statement, count).ToList();
 
     public AssertStatement FakeAssertStatement(Expression? condition = null)
         => AddStatement(
@@ -95,10 +96,10 @@ public class FakeParsedProgram
             )
         );
 
-    public FunctionDefinitionStatement FakeFunctionDefinitionStatement(string? name = null)
+    public FunctionDefinitionStatement FakeFunctionDefinitionStatement(string? name = null, BasicType? returnType = null, List<Statement>? statements = null)
         => AddStatement(
             new FunctionDefinitionStatement(
-                FakeDefinedFunction(name).Name, FakeSourceReference
+                FakeDefinedFunction(name, returnType, statements).Name, FakeSourceReference
             )
         );
 
@@ -109,6 +110,12 @@ public class FakeParsedProgram
                 FakeSourceReference
             )
         );
+
+    public ReturnStatement FakeReturnStatement(Expression? value = null)
+        => AddStatement(GenerateReturnStatement(value));
+
+    public ReturnStatement GenerateReturnStatement(Expression? value = null)
+        => new ReturnStatement(value, FakeSourceReference);
 
     public VariableDefinitionStatement FakeVariableDefinitionStatement(BasicType? type = null, string? name = null, Expression? value = null)
         => AddStatement(

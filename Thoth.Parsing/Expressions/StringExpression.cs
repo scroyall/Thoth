@@ -1,16 +1,8 @@
 namespace Thoth.Parsing.Expressions;
 
-public class StringExpression
-    : Expression
+public record StringExpression(int Index)
+    : Expression(BasicType.String)
 {
-    public readonly int Index;
-
-    public StringExpression(int index)
-        : base(BasicType.String)
-    {
-        Index = index;
-    }
-
     protected override string ArgumentsToString()
     {
         return Index.ToString();

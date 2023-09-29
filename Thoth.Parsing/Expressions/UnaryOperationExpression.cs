@@ -1,6 +1,6 @@
 namespace Thoth.Parsing.Expressions;
 
-public class UnaryOperationExpression(BasicType? type, OperatorType operation, Expression value)
+public record UnaryOperationExpression(BasicType? type, OperatorType operation, Expression value)
     : Expression(type)
 {
     public OperatorType Operation { get; } = CheckOperation(operation);

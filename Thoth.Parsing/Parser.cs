@@ -1,6 +1,7 @@
 ﻿namespace Thoth.Parsing;
 
 using System.Reflection.Metadata.Ecma335;
+using System.Text.Json;
 using Expressions;
 using Statements;
 using Tokenization;
@@ -70,8 +71,24 @@ public class Parser
             KeywordType.Assert   => ParseAssert(),
             KeywordType.Print    => ParsePrint(),
             KeywordType.Function => ParseFunctionDefinition(),
+            KeywordType.Return   => ParseReturn(),
             _ => throw new UnexpectedTokenException(keyword)
         };
+    }
+
+    private ReturnStatement ParseReturn()
+    {
+        var keyword = ConsumeKeyword(KeywordType.Return);
+
+        Expression? value = null;
+        if (Tokens.Peek() is not SymbolToken { Type: SymbolType.Semicolon })
+        {
+            value = ParseExpression();
+        }
+
+        ConsumeSymbol(SymbolType.Semicolon);
+
+        return new ReturnStatement(value, keyword.Source);
     }
 
     private Statement ParseSymbol(SymbolToken symbol)
@@ -89,13 +106,13 @@ public class Parser
         return Tokens.Peek(1) switch
         {
             SymbolToken { Type: SymbolType.Equals } => ParseAssignment(),
-            SymbolToken { Type: SymbolType.LeftParenthesis } => ParseFunctionCall(),
+            SymbolToken { Type: SymbolType.LeftParenthesis } => ParseFunctionCallStatement(),
             { } token => throw new UnexpectedTokenException(token),
             _ => throw new UnexpectedEndOfInputException()
         };
     }
 
-    private FunctionCallStatement ParseFunctionCall()
+    private FunctionCallStatement ParseFunctionCallStatement()
     {
         var identifier = ConsumeToken<IdentifierToken>();
 
@@ -172,17 +189,24 @@ public class Parser
 
     private FunctionDefinitionStatement ParseFunctionDefinition()
     {
-        ConsumeKeyword(KeywordType.Function);
-
+        var source = ConsumeKeyword(KeywordType.Function).Source;
         var identifier = ConsumeToken<IdentifierToken>();
 
         ConsumeSymbol(SymbolType.LeftParenthesis);
         ConsumeSymbol(SymbolType.RightParenthesis);
 
-        var statements = ParseBlock(out var _);
+        BasicType? type = null;
+        if (TryConsumeSymbol(SymbolType.Minus))
+        {
+            ConsumeSymbol(SymbolType.RightChevron);
 
-        DefineFunction(identifier.Name, statements, identifier.Source);
-        return new FunctionDefinitionStatement(identifier.Name, identifier.Source);
+            type = ParseType(out _);
+        }
+
+        var statements = ParseBlock(out _);
+
+        DefineFunction(identifier.Name, type, statements, identifier.Source);
+        return new FunctionDefinitionStatement(identifier.Name, source);
     }
 
     private BasicType? ParseType(out SourceReference source)
@@ -298,6 +322,12 @@ public class Parser
                 left = new BooleanLiteralExpression(boolean.Value);
                 break;
             case IdentifierToken identifier:
+                if (Tokens.Peek() is SymbolToken { Type: SymbolType.LeftParenthesis })
+                {
+                    left = ParseFunctionCallExpression(identifier);
+                    break;
+                }
+
                 left = ParseVariableExpression(identifier);
                 break;
             case SymbolToken { Type: SymbolType.LeftParenthesis }:
@@ -342,6 +372,14 @@ public class Parser
 
         // Not a binary expression.
         return left;
+    }
+
+    private FunctionCallExpression ParseFunctionCallExpression(IdentifierToken identifier)
+    {
+        ConsumeSymbol(SymbolType.LeftParenthesis);
+        ConsumeSymbol(SymbolType.RightParenthesis);
+
+        return new FunctionCallExpression(identifier.Name);
     }
 
     private VariableExpression ParseVariableExpression(IdentifierToken identifier)
@@ -442,6 +480,17 @@ public class Parser
         throw new UnexpectedTokenException(keyword);
     }
 
+    private bool TryConsumeSymbol(SymbolType type)
+    {
+        if (Tokens.Peek() is SymbolToken symbol && symbol.Type == type)
+        {
+            ConsumeSymbol(type);
+            return true;
+        }
+
+        return false;
+    }
+
     private SymbolToken ConsumeSymbol(SymbolType type)
     {
         var symbol = ConsumeToken<SymbolToken>();
@@ -497,11 +546,11 @@ public class Parser
         }
     }
 
-    private int DefineFunction(string name, List<Statement> statements, SourceReference source)
+    private int DefineFunction(string name, BasicType? returnType, List<Statement> statements, SourceReference source)
     {
         if (Functions.ContainsKey(name)) throw new MultiplyDefinedFunctionException(name);
 
-        Functions[name] = new DefinedFunction(name, statements, source);
+        Functions[name] = new DefinedFunction(name, returnType, statements, source);
 
         return Functions.Count - 1;
     }

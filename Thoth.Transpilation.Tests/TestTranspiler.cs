@@ -21,11 +21,14 @@ public class TestTranspiler
         return expression.Type.Resolved();
     }
 
-    protected override void TryGenerateStatement(Statement statement)
+    protected override bool TryGenerateStatement(Statement statement)
         => GenerateStatement(statement as dynamic);
     
-    protected void GenerateStatement(FakeStatement statement)
+    protected bool GenerateStatement(FakeStatement statement)
     {
         WriteCommentLine("fake statement");
+
+        // Fake statements don't generate any statements to guarantee a return.
+        return false;
     }
 }
