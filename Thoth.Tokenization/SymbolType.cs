@@ -21,6 +21,8 @@ public enum SymbolType
     Ampersand = '&',
     VerticalBar = '|',
     Comma = ',',
+    LeftSquareBracket = '[',
+    RightSquareBracket = ']',
 }
 
 public static class SymbolExtensions

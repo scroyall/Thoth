@@ -118,7 +118,7 @@ public class Parser
 
         ConsumeSymbol(SymbolType.LeftParenthesis);
 
-        var parameters = ParseFunctionCallParameters().ToList();
+        var parameters = ParseExpressionsUntil(SymbolType.RightParenthesis).ToList();
 
         ConsumeSymbol(SymbolType.RightParenthesis);
         ConsumeSymbol(SymbolType.Semicolon);
@@ -126,18 +126,23 @@ public class Parser
         return new FunctionCallStatement(identifier.Name, parameters, identifier.Source);
     }
 
-    private IEnumerable<Expression> ParseFunctionCallParameters()
+    /// <summary>
+    /// Parse comma separated expressions until a terminator is reached.
+    /// The terminator is not consumed.
+    /// </summary>
+    private IEnumerable<Expression> ParseExpressionsUntil(SymbolType terminator)
     {
-        // No parameters at all the first next token is a right parenthesis.
-        if (Tokens.Peek() is SymbolToken { Type: SymbolType.RightParenthesis }) yield break;
+        // No parameters at all if the first next token is the terminator.
+        if (IsSymbolNext(terminator)) yield break;
 
         // Repeatedly parse as many parameters as possible.
         while (true)
         {
             yield return ParseExpression();
 
-            // Stop parsing parameters when there's no comma after the previous expression.
-            if (!TryConsumeSymbol(SymbolType.Comma)) yield break;
+            if (IsSymbolNext(terminator)) yield break;
+
+            ConsumeSymbol(SymbolType.Comma);
         }
     }
 
@@ -359,14 +364,14 @@ public class Parser
 
         switch (Tokens.Consume())
         {
-            case IntegerLiteralToken integer:
+            case IntegerLiteralToken integer: // Integer Literal
                 left = new IntegerExpression(integer.Value);
                 break;
-            case BooleanLiteralToken boolean:
+            case BooleanLiteralToken boolean: // Boolean Literal
                 left = new BooleanLiteralExpression(boolean.Value);
                 break;
-            case IdentifierToken identifier:
-                if (Tokens.Peek() is SymbolToken { Type: SymbolType.LeftParenthesis })
+            case IdentifierToken identifier: // Variable or Function Call
+                if (Tokens.Peek() is SymbolToken { Type: SymbolType.LeftParenthesis }) // Function Call
                 {
                     left = ParseFunctionCallExpression(identifier);
                     break;
@@ -374,12 +379,16 @@ public class Parser
 
                 left = ParseVariableExpression(identifier);
                 break;
-            case SymbolToken { Type: SymbolType.LeftParenthesis }:
+            case SymbolToken { Type: SymbolType.LeftParenthesis }: // Bracketed Expression
                 left = ParseExpression();
                 ConsumeSymbol(SymbolType.RightParenthesis);
                 break;
-            case SymbolToken { Type: SymbolType.Exclamation }:
+            case SymbolToken { Type: SymbolType.Exclamation }: // Not Operation
                 left = new UnaryOperationExpression(BasicType.Boolean, OperatorType.Not, ParseExpression());
+                break;
+            case SymbolToken { Type: SymbolType.LeftSquareBracket }: // List
+                left = new ListLiteralExpression(ParseExpressionsUntil(SymbolType.RightSquareBracket).ToList());
+                ConsumeSymbol(SymbolType.RightSquareBracket);
                 break;
             case { } token:
                 throw new UnexpectedTokenException(token);
@@ -422,7 +431,7 @@ public class Parser
     {
         ConsumeSymbol(SymbolType.LeftParenthesis);
 
-        var parameters = ParseFunctionCallParameters().ToList();
+        var parameters = ParseExpressionsUntil(SymbolType.RightParenthesis).ToList();
 
         ConsumeSymbol(SymbolType.RightParenthesis);
 
@@ -537,6 +546,9 @@ public class Parser
 
         return false;
     }
+
+    private bool IsSymbolNext(SymbolType type)
+        => Tokens.Peek() is SymbolToken symbol && symbol.Type == type;
 
     private SymbolToken ConsumeSymbol(SymbolType type)
     {
