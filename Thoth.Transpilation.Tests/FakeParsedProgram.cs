@@ -11,6 +11,9 @@ public record FakeExpression(BasicType? type)
 public record FakeStatement()
     : Statement(new SourceReference(-1, -1));
 
+public record FakeExpressionGeneratorStatement(Expression Expression)
+    : Statement(new SourceReference(-1, -1));
+
 public class FakeParsedProgram
 {
     public List<Statement> Statements { get; } = [];
@@ -21,12 +24,13 @@ public class FakeParsedProgram
 
     public int NameCount = 0;
 
-    public DefinedFunction FakeDefinedFunction(string? name = null, BasicType? returnType = null, List<Statement>? statements = null)
+    public DefinedFunction FakeDefinedFunction(string? name = null, List<NamedParameter>? parameters = null, BasicType? returnType = null, Statement? body = null)
     {
         var defined = new DefinedFunction(
             name ?? $"function{++NameCount}",
+            parameters ?? [],
             returnType,
-            statements ?? FakeStatements(),
+            body ?? FakeStatement(),
             FakeSourceReference
         );
 
@@ -57,7 +61,7 @@ public class FakeParsedProgram
     public AssertStatement FakeAssertStatement(Expression? condition = null)
         => AddStatement(
             new AssertStatement(
-                condition ?? FakeExpression(BasicType.Boolean),
+                condition ?? CreateExpression(BasicType.Boolean),
                 FakeSourceReference
             )
         );
@@ -66,7 +70,7 @@ public class FakeParsedProgram
         => AddStatement(
             new AssignmentStatement(
                 identifier,
-                value ?? FakeUnresolvedExpression(),
+                value ?? CreateUnresolvedExpression(),
                 FakeSourceReference
             )
         );
@@ -74,16 +78,20 @@ public class FakeParsedProgram
     public ConditionalStatement FakeConditionalStatement(Expression? condition = null, Statement? statement = null)
         => AddStatement(
             new ConditionalStatement(
-                condition ?? FakeExpression(BasicType.Boolean),
+                condition ?? CreateExpression(BasicType.Boolean),
                 statement ?? FakeStatement(),
                 FakeSourceReference
             )
         );
 
+    public FakeExpressionGeneratorStatement CreateExpressionGeneratorStatement(Expression expression)
+        => new(expression);
+
     public FunctionCallStatement FakeFunctionCallStatement(string? name = null)
         => AddStatement(
             new FunctionCallStatement(
                 name ?? FakeDefinedFunction().Name,
+                [],
                 FakeSourceReference
             )
         );
@@ -92,45 +100,53 @@ public class FakeParsedProgram
         => AddStatement(
             new FunctionCallStatement(
                 $"undefinedfunction{++NameCount}",
+                [],
                 FakeSourceReference
             )
         );
 
-    public FunctionDefinitionStatement FakeFunctionDefinitionStatement(string? name = null, BasicType? returnType = null, List<Statement>? statements = null)
+    public FunctionDefinitionStatement FakeFunctionDefinitionStatement(string? name = null, List<NamedParameter>? parameters = null, BasicType? returnType = null, Statement? body = null)
         => AddStatement(
             new FunctionDefinitionStatement(
-                FakeDefinedFunction(name, returnType, statements).Name, FakeSourceReference
+                FakeDefinedFunction(name, parameters, returnType, body).Name, FakeSourceReference
             )
         );
+
+    public NamedParameter CreateNamedParameter(BasicType type, string? name = null)
+        => new(type, name ?? $"parameter{++NameCount}");
 
     public PrintStatement FakePrintStatement(Expression? value = null)
         => AddStatement(
             new PrintStatement(
-                value ?? FakeExpression(BasicType.String),
+                value ?? CreateExpression(BasicType.String),
                 FakeSourceReference
             )
         );
 
     public ReturnStatement FakeReturnStatement(Expression? value = null)
-        => AddStatement(GenerateReturnStatement(value));
+        => AddStatement(CreateReturnStatement(value));
 
-    public ReturnStatement GenerateReturnStatement(Expression? value = null)
+    public ReturnStatement CreateReturnStatement(Expression? value = null)
         => new ReturnStatement(value, FakeSourceReference);
 
+    public ScopeStatement FakeScopeStatement(List<Statement>? body = null)
+        => new((body ?? []).ToList(), FakeSourceReference);
+
     public VariableDefinitionStatement FakeVariableDefinitionStatement(BasicType? type = null, string? name = null, Expression? value = null)
-        => AddStatement(
-            new VariableDefinitionStatement(
-                type,
-                name ?? $"variable{++NameCount}",
-                value ?? FakeExpression(type),
-                FakeSourceReference
-            )
+        => AddStatement(CreateVariableDefinitionStatement(type, name, value));
+
+    public VariableDefinitionStatement CreateVariableDefinitionStatement(BasicType? type = null, string? name = null, Expression? value = null)
+        => new(
+            type,
+            name ?? $"variable{++NameCount}",
+            value ?? CreateExpression(type),
+            FakeSourceReference
         );
 
     public WhileStatement FakeWhileStatement(Expression? condition = null, Statement? body = null)
         => AddStatement(
             new WhileStatement(
-                condition ?? FakeExpression(BasicType.Boolean),
+                condition ?? CreateExpression(BasicType.Boolean),
                 body ?? FakeStatement(),
                 FakeSourceReference
             )
@@ -140,11 +156,14 @@ public class FakeParsedProgram
 
 #region Expressions
 
-    public FakeExpression FakeExpression(BasicType? type)
+    public FakeExpression CreateExpression(BasicType? type)
         => new(type);
 
-    public FakeExpression FakeUnresolvedExpression()
+    public FakeExpression CreateUnresolvedExpression()
         => new(null);
+
+    public VariableExpression CreateVariableExpression(string? identifier = null)
+        => new(identifier ?? $"variable{++NameCount}");
 
 #endregion
 }

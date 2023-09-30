@@ -20,6 +20,7 @@ public enum SymbolType
     DoubleQuote = '"',
     Ampersand = '&',
     VerticalBar = '|',
+    Comma = ',',
 }
 
 public static class SymbolExtensions

@@ -1,3 +1,4 @@
+using Thoth.Parsing.Statements;
 using Thoth.Tokenization;
 
 namespace Thoth.Parsing.Tests;
@@ -6,10 +7,9 @@ public class FunctionDefinitionTests
     : ParserTests
 {
     [Test]
-    public void FunctionDefinition_Parses_WithoutReturnType()
+    public void FunctionDefinition_ParsesWithoutReturnType()
     {
         var name = Fakes.IdentifierName;
-
         var program = Parse(
             Fakes.Keyword(KeywordType.Function),
             Fakes.Identifier(name),
@@ -19,19 +19,64 @@ public class FunctionDefinitionTests
             Fakes.Symbol(SymbolType.RightBrace)
         );
 
-        Assert.That(program.Functions, Has.Count.EqualTo(1), "Expected exactly one function to be defined.");
-        Assert.That(program.Functions.Keys, Has.Member(name), "Expected function name to be defined.");
-
-        var function = program.Functions[name];
-
-        Assert.That(function.Name, Is.EqualTo(name), "Expected defined function to have the correct name.");
+        Assert.That(program.Functions, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            var function = program.Functions[name];
+            Assert.That(function.Name, Is.EqualTo(name));
+            Assert.That(function.Parameters, Is.Empty);
+            Assert.That(function.ReturnType, Is.Null);
+            Assert.That(function.Body, Is.TypeOf<ScopeStatement>().With.Property("Statements").Empty);
+        });
     }
 
     [Test]
-    public void FunctionDefinition_Parses_WithReturnType([Values] BasicType type)
+    public void FunctionDefinition_ParsesWithStatement()
     {
         var name = Fakes.IdentifierName;
+        var program = Parse(
+            Fakes.Keyword(KeywordType.Function),
+            Fakes.Identifier(name),
+            Fakes.Symbol(SymbolType.LeftParenthesis),
+            Fakes.Symbol(SymbolType.RightParenthesis),
+            Fakes.Keyword(KeywordType.Return),
+            Fakes.Symbol(SymbolType.Semicolon)
+        );
 
+        Assert.That(program.Functions, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            var function = program.Functions[name];
+            Assert.That(function.Name, Is.EqualTo(name));
+            Assert.That(function.Parameters, Is.Empty);
+            Assert.That(function.ReturnType, Is.Null);
+            Assert.That(function.Body, Is.TypeOf<ReturnStatement>());
+        });
+    }
+
+    [Test]
+    public void FunctionDefinition_ThrowsException_WithMissingReturnType()
+    {
+        Assert.Throws<UnexpectedTokenException>(() =>
+        {
+            Parse(
+                Fakes.Keyword(KeywordType.Function),
+                Fakes.Identifier(),
+                Fakes.Symbol(SymbolType.LeftParenthesis),
+                Fakes.Symbol(SymbolType.RightParenthesis),
+                Fakes.Symbol(SymbolType.Minus),
+                Fakes.Symbol(SymbolType.RightChevron),
+                // Missing return type.
+                Fakes.Symbol(SymbolType.LeftBrace),
+                Fakes.Symbol(SymbolType.RightBrace)
+            );
+        });
+    }
+
+    [Test]
+    public void FunctionDefinition_ParsesWithReturnType([Values] BasicType type)
+    {
+        var name = Fakes.IdentifierName;
         var program = Parse(
             Fakes.Keyword(KeywordType.Function),
             Fakes.Identifier(name),
@@ -44,12 +89,74 @@ public class FunctionDefinitionTests
             Fakes.Symbol(SymbolType.RightBrace)
         );
 
-        Assert.That(program.Functions, Has.Count.EqualTo(1), "Expected exactly one function to be defined.");
-        Assert.That(program.Functions.Keys, Has.Member(name), "Expected function name to be defined.");
+        Assert.That(program.Functions, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            var function = program.Functions[name];
+            Assert.That(function.Name, Is.EqualTo(name));
+            Assert.That(function.Parameters, Is.Empty);
+            Assert.That(function.ReturnType, Is.EqualTo(type));
+            Assert.That(function.Body, Is.TypeOf<ScopeStatement>().With.Property("Statements").Empty);
+        });
+    }
 
-        var function = program.Functions[name];
+    [Test]
+    public void FunctionDefinition_ParsesWithSingleParameter([Values] BasicType type)
+    {
+        var parameter = Fakes.NamedParameter(type);
 
-        Assert.That(function.Name, Is.EqualTo(name), "Expected defined function to have the correct name.");
-        Assert.That(function.ReturnType, Is.EqualTo(type), "Expected defined function to have the correct return type.");
+        var name = Fakes.IdentifierName;
+        var program = Parse(
+            Fakes.Keyword(KeywordType.Function),
+            Fakes.Identifier(name),
+            Fakes.Symbol(SymbolType.LeftParenthesis),
+            Fakes.Type(parameter.Type),
+            Fakes.Identifier(parameter.Name),
+            Fakes.Symbol(SymbolType.RightParenthesis),
+            Fakes.Symbol(SymbolType.LeftBrace),
+            Fakes.Symbol(SymbolType.RightBrace)
+        );
+
+        Assert.That(program.Functions, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            var function = program.Functions[name];
+            Assert.That(function.Name, Is.EqualTo(name));
+            Assert.That(function.Parameters, Is.EquivalentTo(new[] { parameter }));
+            Assert.That(function.ReturnType, Is.Null);
+            Assert.That(function.Body, Is.TypeOf<ScopeStatement>().With.Property("Statements").Empty);
+        });
+    }
+
+    [Test]
+    public void FunctionDefinition_ParsesWithMultipleParameters([Values] BasicType firstType, [Values] BasicType secondType)
+    {
+        var first = Fakes.NamedParameter(firstType);
+        var second = Fakes.NamedParameter(secondType);
+
+        var name = Fakes.IdentifierName;
+        var program = Parse(
+            Fakes.Keyword(KeywordType.Function),
+            Fakes.Identifier(name),
+            Fakes.Symbol(SymbolType.LeftParenthesis),
+            Fakes.Type(first.Type),
+            Fakes.Identifier(first.Name),
+            Fakes.Symbol(SymbolType.Comma),
+            Fakes.Type(second.Type),
+            Fakes.Identifier(second.Name),
+            Fakes.Symbol(SymbolType.RightParenthesis),
+            Fakes.Symbol(SymbolType.LeftBrace),
+            Fakes.Symbol(SymbolType.RightBrace)
+        );
+
+        Assert.That(program.Functions, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            var function = program.Functions[name];
+            Assert.That(function.Name, Is.EqualTo(name));
+            Assert.That(program.Functions[name].Parameters, Is.EquivalentTo(new[] { first, second }));
+            Assert.That(function.ReturnType, Is.Null);
+            Assert.That(function.Body, Is.TypeOf<ScopeStatement>().With.Property("Statements").Empty);
+        });
     }
 }

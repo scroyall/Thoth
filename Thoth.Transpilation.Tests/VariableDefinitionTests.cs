@@ -14,7 +14,7 @@ public class VariableDefinitionTests
     [Test]
     public void DefinitionStatement_Transpiles_WhenVariableTypeIsUnresolved([Values] BasicType expressionType)
     {
-        Program.FakeVariableDefinitionStatement(value: Program.FakeExpression(expressionType));
+        Program.FakeVariableDefinitionStatement(value: Program.CreateExpression(expressionType));
         
         Transpile();
     }
@@ -26,7 +26,7 @@ public class VariableDefinitionTests
     {
         if (expressionType.Matches(variableType)) Assert.Ignore("Expression type matches variable type.");
 
-        Program.FakeVariableDefinitionStatement(type: variableType, value: Program.FakeExpression(expressionType));
+        Program.FakeVariableDefinitionStatement(type: variableType, value: Program.CreateExpression(expressionType));
 
         Assert.Throws<MismatchedTypeException>(Transpile);
     }

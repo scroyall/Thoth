@@ -6,7 +6,7 @@ class AssertTests
     [Test]
     public void AssertStatement_DoesNotThrow_WhenConditionTypeIsBoolean()
     {
-        Program.FakeAssertStatement(condition: Program.FakeExpression(BasicType.Boolean));
+        Program.FakeAssertStatement(condition: Program.CreateExpression(BasicType.Boolean));
 
         Transpile();
     }
@@ -17,7 +17,7 @@ class AssertTests
     {
         if (type == BasicType.Boolean) Assert.Ignore("Type is boolean.");
 
-        Program.FakeAssertStatement(condition: Program.FakeExpression(type));
+        Program.FakeAssertStatement(condition: Program.CreateExpression(type));
 
         Assert.Throws<MismatchedTypeException>(Transpile);
     }
@@ -25,7 +25,7 @@ class AssertTests
     [Test]
     public void AssertStatement_ThrowsUnresolvedTypeException_WhenConditionTypeIsUnresolved()
     {
-        Program.FakeAssertStatement(condition: Program.FakeUnresolvedExpression());
+        Program.FakeAssertStatement(condition: Program.CreateUnresolvedExpression());
 
         Assert.Throws<UnresolvedTypeException>(Transpile);
     }

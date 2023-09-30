@@ -5,7 +5,8 @@ namespace Thoth.Parsing;
 
 public record DefinedFunction(
     string Name,
+    IReadOnlyList<NamedParameter> Parameters,
     BasicType? ReturnType,
-    IReadOnlyList<Statement> Body,
+    Statement Body,
     SourceReference Source
 );

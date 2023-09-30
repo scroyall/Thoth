@@ -31,4 +31,17 @@ public class TestTranspiler
         // Fake statements don't generate any statements to guarantee a return.
         return false;
     }
+
+    protected bool GenerateStatement(FakeExpressionGeneratorStatement generator)
+    {
+        WriteCommentLine("fake expression generator");
+
+        TryGenerateExpression(generator.Expression);
+
+        WriteCommentLine("discard expression value");
+        GeneratePop("rax");
+
+        // Fake expression generators don't generate any statements to guarantee a return.
+        return false;
+    }
 }

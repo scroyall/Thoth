@@ -13,7 +13,7 @@ public class NotOperationTests
             value: new UnaryOperationExpression(
                 BasicType.Boolean,
                 OperatorType.Not,
-                Program.FakeExpression(BasicType.Boolean)
+                Program.CreateExpression(BasicType.Boolean)
             )
         );
 

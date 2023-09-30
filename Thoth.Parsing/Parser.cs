@@ -117,10 +117,28 @@ public class Parser
         var identifier = ConsumeToken<IdentifierToken>();
 
         ConsumeSymbol(SymbolType.LeftParenthesis);
+
+        var parameters = ParseFunctionCallParameters().ToList();
+
         ConsumeSymbol(SymbolType.RightParenthesis);
         ConsumeSymbol(SymbolType.Semicolon);
 
-        return new FunctionCallStatement(identifier.Name, identifier.Source);
+        return new FunctionCallStatement(identifier.Name, parameters, identifier.Source);
+    }
+
+    private IEnumerable<Expression> ParseFunctionCallParameters()
+    {
+        // No parameters at all the first next token is a right parenthesis.
+        if (Tokens.Peek() is SymbolToken { Type: SymbolType.RightParenthesis }) yield break;
+
+        // Repeatedly parse as many parameters as possible.
+        while (true)
+        {
+            yield return ParseExpression();
+
+            // Stop parsing parameters when there's no comma after the previous expression.
+            if (!TryConsumeSymbol(SymbolType.Comma)) yield break;
+        }
     }
 
     private AssignmentStatement ParseAssignment()
@@ -193,6 +211,9 @@ public class Parser
         var identifier = ConsumeToken<IdentifierToken>();
 
         ConsumeSymbol(SymbolType.LeftParenthesis);
+
+        var parameters = ParseNamedParameters().ToList();
+
         ConsumeSymbol(SymbolType.RightParenthesis);
 
         BasicType? type = null;
@@ -203,10 +224,33 @@ public class Parser
             type = ParseType(out _);
         }
 
-        var statements = ParseBlock(out _);
+        var body = ParseStatement();
 
-        DefineFunction(identifier.Name, type, statements, identifier.Source);
+        DefineFunction(identifier.Name, parameters, type, body, identifier.Source);
         return new FunctionDefinitionStatement(identifier.Name, source);
+    }
+
+    private IEnumerable<NamedParameter> ParseNamedParameters()
+    {
+        // Next token must be a type to parse any named parameters.
+        if (Tokens.Peek() is not TypeToken) yield break;
+
+        // Keep parsing named parameters for as long as possible.
+        while (true)
+        {
+            yield return ParseNamedParameter();
+
+            // Finish parsing named parameters unless there's a comma.
+            if (!TryConsumeSymbol(SymbolType.Comma)) yield break;
+        }
+    }
+
+    private NamedParameter ParseNamedParameter()
+    {
+        var type = ConsumeToken<TypeToken>().Type;
+        var name = ConsumeToken<IdentifierToken>().Name;
+
+        return new(type, name);
     }
 
     private BasicType? ParseType(out SourceReference source)
@@ -377,9 +421,12 @@ public class Parser
     private FunctionCallExpression ParseFunctionCallExpression(IdentifierToken identifier)
     {
         ConsumeSymbol(SymbolType.LeftParenthesis);
+
+        var parameters = ParseFunctionCallParameters().ToList();
+
         ConsumeSymbol(SymbolType.RightParenthesis);
 
-        return new FunctionCallExpression(identifier.Name);
+        return new FunctionCallExpression(identifier.Name, parameters);
     }
 
     private VariableExpression ParseVariableExpression(IdentifierToken identifier)
@@ -546,11 +593,11 @@ public class Parser
         }
     }
 
-    private int DefineFunction(string name, BasicType? returnType, List<Statement> statements, SourceReference source)
+    private int DefineFunction(string name, IReadOnlyList<NamedParameter> parameters, BasicType? returnType, Statement body, SourceReference source)
     {
         if (Functions.ContainsKey(name)) throw new MultiplyDefinedFunctionException(name);
 
-        Functions[name] = new DefinedFunction(name, returnType, statements, source);
+        Functions[name] = new DefinedFunction(name, parameters, returnType, body, source);
 
         return Functions.Count - 1;
     }

@@ -9,7 +9,7 @@ public class AssignmentTests
     {
         var definition = Program.FakeVariableDefinitionStatement(type: type);
 
-        Program.FakeAssignmentStatement(definition.Identifier, Program.FakeExpression(type));
+        Program.FakeAssignmentStatement(definition.Identifier, Program.CreateExpression(type));
 
         Transpile();
     }
@@ -20,7 +20,7 @@ public class AssignmentTests
     {
         var definition = Program.FakeVariableDefinitionStatement(type: variableType);
 
-        Program.FakeAssignmentStatement(definition.Identifier, Program.FakeUnresolvedExpression());
+        Program.FakeAssignmentStatement(definition.Identifier, Program.CreateUnresolvedExpression());
 
         Assert.Throws<UnresolvedTypeException>(Transpile);
     }
@@ -34,7 +34,7 @@ public class AssignmentTests
 
         var definition = Program.FakeVariableDefinitionStatement(type: variableType);
 
-        Program.FakeAssignmentStatement(definition.Identifier, Program.FakeExpression(expressionType));
+        Program.FakeAssignmentStatement(definition.Identifier, Program.CreateExpression(expressionType));
 
         Assert.Throws<MismatchedTypeException>(Transpile);
     }

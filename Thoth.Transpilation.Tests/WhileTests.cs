@@ -6,7 +6,7 @@ class WhileTests
     [Test]
     public void WhileStatement_DoesNotThrow_WhenConditionTypeIsBoolean()
     {
-        Program.FakeWhileStatement(condition: Program.FakeExpression(BasicType.Boolean));
+        Program.FakeWhileStatement(condition: Program.CreateExpression(BasicType.Boolean));
 
         Transpile();
     }
@@ -17,7 +17,7 @@ class WhileTests
     {
         if (type == BasicType.Boolean) Assert.Ignore("Type is boolean.");
 
-        Program.FakeWhileStatement(condition: Program.FakeExpression(type));
+        Program.FakeWhileStatement(condition: Program.CreateExpression(type));
 
         Assert.Throws<MismatchedTypeException>(Transpile);
     }
@@ -25,7 +25,7 @@ class WhileTests
     [Test]
     public void WhileStatement_ThrowsUnresolvedTypeException_WhenConditionTypeIsUnresolved()
     {
-        Program.FakeWhileStatement(condition: Program.FakeUnresolvedExpression());
+        Program.FakeWhileStatement(condition: Program.CreateUnresolvedExpression());
 
         Assert.Throws<UnresolvedTypeException>(Transpile);
     }

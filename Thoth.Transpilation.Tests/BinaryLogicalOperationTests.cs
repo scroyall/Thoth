@@ -15,8 +15,8 @@ public class BinaryLogicalOperationTests
             value: new BinaryOperationExpression(
                 BasicType.Boolean,
                 operation,
-                Left: Program.FakeExpression(BasicType.Boolean),
-                Right: Program.FakeExpression(BasicType.Boolean)
+                Left: Program.CreateExpression(BasicType.Boolean),
+                Right: Program.CreateExpression(BasicType.Boolean)
             )
         );
 
@@ -32,8 +32,8 @@ public class BinaryLogicalOperationTests
             value: new BinaryOperationExpression(
                 BasicType.Boolean,
                 operation,
-                Left: Program.FakeUnresolvedExpression(),
-                Right: Program.FakeUnresolvedExpression()
+                Left: Program.CreateUnresolvedExpression(),
+                Right: Program.CreateUnresolvedExpression()
             )
         );
 
@@ -53,8 +53,8 @@ public class BinaryLogicalOperationTests
             value: new BinaryOperationExpression(
                 BasicType.Boolean,
                 operation,
-                Left: Program.FakeExpression(leftType),
-                Right: Program.FakeExpression(rightType)
+                Left: Program.CreateExpression(leftType),
+                Right: Program.CreateExpression(rightType)
             )
         );
 

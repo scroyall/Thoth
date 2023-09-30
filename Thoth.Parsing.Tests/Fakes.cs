@@ -48,6 +48,9 @@ public static class Fakes
         };
     }
 
+    public static NamedParameter NamedParameter(BasicType type)
+        => new(type, IdentifierName);
+
     public static void Operation(ref List<Token> tokens, OperatorType operation)
     {
         switch (operation)

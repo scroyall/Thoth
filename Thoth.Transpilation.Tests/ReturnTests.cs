@@ -16,7 +16,7 @@ public class ReturnTests
     {
         Program.FakeFunctionDefinitionStatement(
             returnType: null,
-            statements: [ Program.GenerateReturnStatement() ]
+            body: Program.CreateReturnStatement()
         );
 
         Transpile();
@@ -27,7 +27,7 @@ public class ReturnTests
     {
         Program.FakeFunctionDefinitionStatement(
             returnType: type,
-            statements: [ Program.GenerateReturnStatement() ]
+            body: Program.CreateReturnStatement()
         );
 
         Assert.Throws<MissingExpressionException>(Transpile);
@@ -38,7 +38,7 @@ public class ReturnTests
     {
         Program.FakeFunctionDefinitionStatement(
             returnType: type,
-            statements: [Program.GenerateReturnStatement(Program.FakeExpression(type))]
+            body: Program.CreateReturnStatement(Program.CreateExpression(type))
         );
 
         Transpile();
@@ -51,7 +51,7 @@ public class ReturnTests
 
         Program.FakeFunctionDefinitionStatement(
             returnType: returnType,
-            statements: [Program.GenerateReturnStatement(Program.FakeExpression(valueType))]
+            body: Program.CreateReturnStatement(Program.CreateExpression(valueType))
         );
 
         Assert.Throws<MismatchedTypeException>(Transpile);
@@ -61,7 +61,12 @@ public class ReturnTests
     public void Return_ThrowsException_WithUnreachableStatements()
     {
         Program.FakeFunctionDefinitionStatement(
-            statements: [Program.GenerateReturnStatement(), new FakeStatement()]
+            body: Program.FakeScopeStatement(
+                [
+                    Program.CreateReturnStatement(),
+                    Program.FakeStatement() 
+                ]
+            )
         );
 
         Assert.Throws<UnexpectedStatementException>(Transpile);

@@ -6,7 +6,7 @@ public class PrintTests
     [Test]
     public void Print_DoesNotThrow_WithInteger()
     {
-        Program.FakePrintStatement(value: Program.FakeExpression(BasicType.Integer));
+        Program.FakePrintStatement(value: Program.CreateExpression(BasicType.Integer));
 
         Transpile();
     }
@@ -17,7 +17,7 @@ public class PrintTests
     [Test]
     public void Print_ThrowsUnresolvedTypeException_WhenExpressionTypeIsUnresolved()
     {
-        Program.FakePrintStatement(value: Program.FakeUnresolvedExpression());
+        Program.FakePrintStatement(value: Program.CreateUnresolvedExpression());
 
         Assert.Throws<UnresolvedTypeException>(Transpile);
     }

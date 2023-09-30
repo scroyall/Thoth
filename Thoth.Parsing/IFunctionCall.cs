@@ -1,3 +1,5 @@
+using Thoth.Parsing.Expressions;
+
 namespace Thoth.Parsing;
 
 /// <summary>
@@ -9,4 +11,9 @@ public interface IFunctionCall
     /// Name of the function to call.
     /// </summary>
     public string Name { get; }
+
+    /// <summary>
+    /// List of expressions for parameter values.
+    /// </summary>
+    public IReadOnlyList<Expression> Parameters { get; }
 }

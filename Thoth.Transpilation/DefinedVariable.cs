@@ -1,9 +1,9 @@
-using Thoth.Parsing;
-
 namespace Thoth.Transpilation;
 
-public readonly struct DefinedVariable(BasicType type, int index)
+public enum VariableScope
 {
-    public readonly BasicType Type = type;
-    public readonly int Index = index;
+    Local,
+    Parameter
 }
+
+public record DefinedVariable(VariableScope Scope, BasicType Type, int Offset);

@@ -19,12 +19,12 @@ public class Transpiler
     /// <summary>
     /// Map of defined variable identifiers to their definitions.
     /// </summary>
-    private readonly Dictionary<string, DefinedVariable> _variableDefinitions = new();
+    private readonly Dictionary<string, DefinedVariable> _definitions = new();
 
     /// <summary>
     /// Stack of defined variables.
     /// </summary>
-    private readonly Stack<string> _variables = new();
+    private readonly Stack<string> _locals = new();
 
     /// <summary>
     /// Size of the stack.
@@ -48,7 +48,7 @@ public class Transpiler
         _program = program;
 
         _stackSize = 0;
-        _variableDefinitions.Clear();
+        _definitions.Clear();
         _scopes.Clear();
         _calls.Clear();
         _labels = 0;
@@ -109,6 +109,10 @@ public class Transpiler
         WriteLine();
 
         WriteLabelLine("_start");
+        WriteLine();
+
+        OpenStackFrame();
+        WriteLine();
 
         GenerateStatements(Program.Statements);
         GenerateDefaultExit();
@@ -130,14 +134,32 @@ public class Transpiler
         // Write label to which execution will jump to call the function.
         WriteLabelLine(GetFunctionEntryLabel(function.Name));
 
-        OpenScope();
+        // Adjust the stack size after the call has pushed the call return location on to the stack.
+        _stackSize++;
+
+        // Define a hidden parameter for the return value, if the function has one.
+        if (function.ReturnType is { } type)
+        {
+            DefineParameter(type, "_return", function.Parameters.Count);
+            _stackSize++;
+        }
+
+        // Define any parameters.
+        for (int index = 0; index < function.Parameters.Count; index++)
+        {
+            var parameter = function.Parameters[index];
+
+            DefineParameter(parameter.Type, parameter.Name, function.Parameters.Count - 1 - index);
+            _stackSize++;
+        }
+
         OpenStackFrame();
 
         // Push the function's return type on to the call stack to indicate the valid type to return statements
         // within the function body.
         _calls.Push(function);
 
-        var returned = GenerateStatements(function.Body);
+        var returned = TryGenerateStatement(function.Body);
 
         _calls.Pop();
 
@@ -147,10 +169,26 @@ public class Transpiler
         WriteLabelLine(GetFunctionExitLabel(function.Name));
 
         CloseStackFrame();
-        CloseScope();
+
+        // Undefine any parameters.
+        foreach (var parameter in function.Parameters)
+        {
+            UndefineVariable(parameter.Name);
+            _stackSize--;
+        }
+
+        // Undefine the hidden parameter for the return value, if the function has one.
+        if (function.ReturnType is not null)
+        {
+            UndefineVariable("_return");
+            _stackSize--;
+        }
 
         // Return to the call site.
         WriteLine("ret");
+
+        // Adjust the stack size back after the return pops the call return location off the stack.
+        _stackSize--;
     }
 
     private void OpenStackFrame()
@@ -173,7 +211,7 @@ public class Transpiler
         WriteLine("mov rsp, rbp");
 
         // Pop the previous stack base pointer off the stack, restoring the previous stack frame.
-        WriteLine("pop rbp");
+        GeneratePop("rbp");
     }
 
     private void GenerateDefaultExit()
@@ -212,28 +250,33 @@ public class Transpiler
     {
         WriteCommentLine(statement);
 
-        // Return statements are not valid if not in a call.
+        // Not possible to return outside of a call.
         if (_calls.Count == 0) throw new UnexpectedStatementException(statement);
 
-        // Check if we're in a call which is expecting a return value.
+        // Check if we're calling a function which expects a return value.
         if (_calls.Peek().ReturnType is { } type)
         {
             // Return statements must have a return value if the call is expecting one.
             if (statement.Value is null) throw new MissingExpressionException(type);
 
-            // Return values must match the type the call is expecting.
-            statement.Value.Type.CheckMatches(type);
-
             WriteCommentLine("return value");
 
-            // Generate the return value and push it on to the stack.
-            TryGenerateExpression(statement.Value);
+            // Generate the return value, pushing it on to the stack, and check it matches the type expected by the
+            // function.
+            TryGenerateExpression(statement.Value).CheckMatches(type);
 
-            // Pop the return value off the top of the stack.
+            // Pop the return value off the stack.
             GeneratePop("rax");
 
-            // Move the return value into the reserved space for it just below the
-            WriteLine("mov [rbp + 2 * 8], rax");
+            // Get the definition for the hidden return parameter.
+            var parameter = GetDefinition("_return");
+
+            // Check the type of the hidden return parameter matches the type expected by the function.
+            parameter.Type.CheckMatches(type);
+
+            // Get the location of the hidden return parameter, and move the return value into it.
+            var location = GetVariableLocation(parameter);
+            WriteLine($"mov [{location}], rax");
         }
         else if (statement.Value is not null)
         {
@@ -311,15 +354,15 @@ public class Transpiler
     {
         WriteCommentLine(assignment);
 
-        var definition = GetVariableDefinition(assignment.Identifier);
+        var definition = GetDefinition(assignment.Identifier);
         TryGenerateExpression(assignment.Value).CheckMatches(definition.Type);
 
         // Pop the result of the expression off the stack.
         GeneratePop("rax");
 
-        // Move the result of the expression into the variable on the stack.
-        var stackOffset = GetVariableStackOffset(assignment.Identifier);
-        WriteLine($"mov [rsp + {stackOffset} * 8], rax");
+        // Get the location of the variable and move the result of the expression into it.
+        var location = GetVariableLocation(definition);
+        WriteLine($"mov QWORD [{location}], rax");
 
         // Assignments don't generate any statements to guarantee a return.
         return false;
@@ -366,7 +409,7 @@ public class Transpiler
         // Check the expression type matches the definition type.
         expressionType.CheckMatches(definition.Type);
 
-        PushDefinedVariable(definition.Type ?? expressionType, definition.Identifier);
+        DefineLocalVariable(definition.Type ?? expressionType, definition.Identifier);
 
         // Variable definitions don't generate any statements to guarantee a return.
         return false;
@@ -393,7 +436,7 @@ public class Transpiler
         TryGenerateExpression( enumerator.Range.Start);
 
         // Initialize the variable holding the enumerator's current value with the start value.
-        PushDefinedVariable(BasicType.Integer, enumerator.Identifier);
+        DefineLocalVariable(BasicType.Integer, enumerator.Identifier);
 
         GenerateConditionalLoop(
             generateTest: (breakLabel) =>
@@ -595,16 +638,32 @@ public class Transpiler
         // Get the function definition.
         var definition = Program.Functions[call.Name] ?? throw new NullReferenceException();
 
-        // Reserve a stack entry for the return value, if the the function has one, just before the stack frame.
+        // Check the number of parameters to the call match the function definition.
+        if (call.Parameters.Count != definition.Parameters.Count) throw new InvalidParameterCountException(definition.Name, call.Parameters.Count, definition.Parameters.Count);
+
+        // Reserve a stack entry for the return value, if the function has one, just before the stack frame.
         if (definition.ReturnType is not null)
         {
             WriteCommentLine("return value");
             GeneratePush();
         }
 
+        for (int index = 0; index < definition.Parameters.Count; index++)
+        {
+            // Generate the expression for the parameter and check the type matches the definition.
+            TryGenerateExpression(call.Parameters[index]).CheckMatches(definition.Parameters[index].Type);
+        }
+
         // Get the label for the function and execute it.
         var label = GetFunctionEntryLabel(call.Name);
         WriteLine($"call {label}");
+
+        // Discard parameters from the stack, if any.
+        if (definition.Parameters.Count > 0)
+        {
+            WriteCommentLine("discard parameters");
+            GeneratePop(definition.Parameters.Count);
+        }
 
         return definition.ReturnType;
     }
@@ -625,9 +684,9 @@ public class Transpiler
     {
         WriteCommentLine(variable);
 
-        var definition = GetVariableDefinition(variable.Identifier);
-        var stackOffset = GetVariableStackOffset(variable.Identifier);
-        GeneratePush($"QWORD[rsp + {stackOffset} * 8]");
+        var definition = GetDefinition(variable.Identifier);
+        var location = GetVariableLocation(definition);
+        GeneratePush($"QWORD [{location}]");
 
         return definition.Type;
     }
@@ -788,7 +847,7 @@ public class Transpiler
     /// </remarks>
     private void OpenScope()
     {
-        _scopes.Push(_variables.Count);
+        _scopes.Push(_locals.Count);
 
         var number = _scopes.Count;
         WriteCommentLine($"open scope {number}");
@@ -799,14 +858,14 @@ public class Transpiler
         WriteCommentLine($"close scope {_scopes.Count}");
 
         // Calculate the difference between the current number of variables and the number when the scope was opened.
-        var delta = _variables.Count - _scopes.Pop();
+        var delta = _locals.Count - _scopes.Pop();
 
         // Check we aren't trying to  
-        if (delta > _variables.Count) throw new Exception("Variable count is less than scope target!");
+        if (delta > _locals.Count) throw new Exception("Variable count is less than scope target!");
 
         for (int i = 0; i < delta; i++)
         {
-            PopDefinedVariable();
+            UndefineLocal();
         }
 
         _stackSize -= delta;
@@ -828,18 +887,26 @@ public class Transpiler
         WriteLine($"push {source}");
     }
 
-    protected void GeneratePush()
+    protected void GeneratePush(int count = 1)
     {
-        _stackSize++;
-        WriteLine("sub rsp, 1 * 8");
+        _stackSize += count;
+        WriteLine($"sub rsp, {count} * 8");
     }
 
-    private void GeneratePop(string destination)
+    protected void GeneratePop(string destination)
     {
         if (_stackSize <= 0) throw new Exception("Stack is empty.");
 
         _stackSize--;
         WriteLine($"pop {destination}");
+    }
+
+    protected void GeneratePop(int count = 1)
+    {
+        if (_stackSize < count) throw new Exception("Stack is empty.");
+
+        _stackSize -= count;
+        WriteLine($"add rsp, {count} * 8");
     }
 
     private void GeneratePeek(string destination, int offset = 0)
@@ -854,63 +921,81 @@ public class Transpiler
     #region Variables
 
     /// <summary>
-    /// Push a variable on to the stack of defined variables.
+    /// Define a variable.
     /// </summary>
     /// <param name="identifier">Unique identifier for the variable.</param>
     /// <exception cref="MultiplyDefinedVariableException">If the variable is already defined.</exception>
-    private void PushDefinedVariable(BasicType type, string identifier)
+    private void DefineLocalVariable(BasicType type, string identifier)
     {
-        if (IsVariableDefined(identifier)) throw new MultiplyDefinedVariableException(identifier);
+        if (IsDefined(identifier)) throw new MultiplyDefinedVariableException(identifier);
 
-        // Add the identifier to the stack of defined variables.
-        _variables.Push(identifier);
+        // Add the identifier to the stack of locally defined variables.
+        _locals.Push(identifier);
 
         // Add the position of the variable on the stack to the map of variable stack indices.
-        _variableDefinitions[identifier] = new DefinedVariable(type, _stackSize);
+        _definitions[identifier] = new(VariableScope.Local, type, _stackSize);
+    }
+
+    private void DefineParameter(BasicType type, string identifier, int offset)
+    {
+        if (IsDefined(identifier)) throw new MultiplyDefinedFunctionException(identifier);
+
+        _definitions[identifier] = new(VariableScope.Parameter, type, offset);
+    }
+
+    private void UndefineVariable(string identifier)
+    {
+        if (!IsDefined(identifier)) throw new UndefinedFunctionException(identifier);
+
+        _definitions.Remove(identifier);
     }
 
     /// <summary>
     /// Pop a variable off the stack of defined variables.
     /// </summary>
-    private void PopDefinedVariable()
+    private void UndefineLocal()
     {
         // Pop the top identifier off the stack of defined variables.
-        var identifier = _variables.Pop();
+        var identifier = _locals.Pop();
 
-        // Remove the position of the variable on the stack from the map of variable stack indices.
-        _variableDefinitions.Remove(identifier);
+        UndefineVariable(identifier);
+    }
+
+    /// <summary>
+    /// Pop a number of variables off the stack of defined variables.
+    /// </summary>
+    private void UndefineLocals(int count)
+    {
+        for (int index = 0; index < count; index++)
+        {
+            UndefineLocal();
+        }
     }
 
     /// <summary>
     /// Check if a variable is defined.
     /// </summary>
     /// <param name="identifier">Unique identifier for the variable.</param>
-    private bool IsVariableDefined(string identifier)
+    private bool IsDefined(string identifier)
     {
-        return _variables.Contains(identifier);
+        return _definitions.ContainsKey(identifier);
     }
 
-    /// <summary>
-    /// Get the offset of a defined variable from the current top of the stack.
-    /// </summary>
-    /// <param name="identifier">Unique identifier for the variable.</param>
-    /// <returns></returns>
-    /// <exception cref="UndefinedVariableException">If the variable is not defined.</exception>
-    private int GetVariableStackOffset(string identifier)
+    private DefinedVariable GetDefinition(string identifier)
     {
-        if (!_variableDefinitions.TryGetValue(identifier, out var definition))
+        if (!IsDefined(identifier)) throw new UndefinedVariableException(identifier);
+
+        return _definitions[identifier];
+    }
+
+    private string GetVariableLocation(DefinedVariable definition)
+    {
+        return definition.Scope switch
         {
-            throw new UndefinedVariableException(identifier);
-        }
-
-        return _stackSize - definition.Index;
-    }
-
-    private DefinedVariable GetVariableDefinition(string identifier)
-    {
-        if (!IsVariableDefined(identifier)) throw new UndefinedVariableException(identifier);
-
-        return _variableDefinitions[identifier];
+            VariableScope.Local => $"rbp - {definition.Offset - 1} * 8",
+            VariableScope.Parameter => $"rbp + ({definition.Offset} + 2) * 8",
+            _ => throw new NotImplementedException()
+        };
     }
 
     #endregion
