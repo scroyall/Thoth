@@ -1,4 +1,3 @@
-using System.Collections;
 using Thoth.Tokenization;
 using Thoth.Tokenization.Tokens;
 
@@ -37,8 +36,6 @@ public static class Fakes
 
     public static Token Literal(BasicType type)
     {
-        if (type == BasicType.String) Assert.Ignore("String literals are not yet implemented.");
-
         return type switch
         {
             BasicType.Integer => IntegerLiteral,

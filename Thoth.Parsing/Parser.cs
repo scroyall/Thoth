@@ -370,6 +370,9 @@ public class Parser
             case BooleanLiteralToken boolean: // Boolean Literal
                 left = new BooleanLiteralExpression(boolean.Value);
                 break;
+            case StringLiteralToken string_: // String Literal
+                left = new StringExpression(string_.Index);
+                break;
             case IdentifierToken identifier: // Variable or Function Call
                 if (Tokens.Peek() is SymbolToken { Type: SymbolType.LeftParenthesis }) // Function Call
                 {
