@@ -9,3 +9,18 @@ public record Expression(BasicType? Type)
 
     protected virtual string ArgumentsToString() => string.Empty;
 }
+
+public static class ExpressionExtensions
+{
+    public static BasicType? FindMostExactType(this IEnumerable<Expression> expressions)
+    {
+        BasicType? type = null;
+
+        foreach (var expression in expressions)
+        {
+            type = expression.Type.CheckMatches(type);
+        }
+
+        return type;
+    }
+}
