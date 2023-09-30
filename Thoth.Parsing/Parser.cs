@@ -341,16 +341,7 @@ public class Parser
 
         ConsumeSymbol(SymbolType.LeftParenthesis);
 
-        Expression expression;
-        if (Tokens.Peek() is StringLiteralToken literal)
-        {
-            expression = new StringExpression(literal.Index);
-            Tokens.Consume();
-        }
-        else
-        {
-            expression = ParseExpression();
-        }
+        var expression = ParseExpression();
 
         ConsumeSymbol(SymbolType.RightParenthesis);
         ConsumeSymbol(SymbolType.Semicolon);
