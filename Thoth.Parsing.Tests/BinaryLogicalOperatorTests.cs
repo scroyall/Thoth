@@ -16,10 +16,10 @@ public class BinaryLogicalOperatorTests
             Fakes.Type(BasicType.Unresolved),
             Fakes.Identifier(),
             Fakes.Symbol(SymbolType.Equals),
-            Fakes.Literal(BasicType.Boolean),
         };
+        Fakes.Literal(ref tokens, BasicType.Boolean);
         Fakes.Operation(ref tokens, operation);
-        tokens.Add(Fakes.Literal(BasicType.Boolean));
+        Fakes.Literal(ref tokens, BasicType.Boolean);
         tokens.Add(Fakes.Symbol(SymbolType.Semicolon));
 
         var program = Parse(Fakes.Program(tokens));
@@ -73,11 +73,11 @@ public class BinaryLogicalOperatorTests
         var tokens = new List<Token> {
             Fakes.Type(BasicType.Unresolved),
             Fakes.Identifier(),
-            Fakes.Symbol(SymbolType.Equals),
-            Fakes.Literal(leftType),
+            Fakes.Symbol(SymbolType.Equals)
         };
+        Fakes.Literal(ref tokens, leftType);
         Fakes.Operation(ref tokens, operation);
-        tokens.Add(Fakes.Literal(rightType));
+        Fakes.Literal(ref tokens, rightType);
         tokens.Add(Fakes.Symbol(SymbolType.Semicolon));
 
         Assert.Throws<MismatchedTypeException>(() => Parse(tokens));

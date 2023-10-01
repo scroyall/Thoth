@@ -3,7 +3,7 @@ namespace Thoth;
 public record ResolvedBasicType(string source)
     : BasicType(source), IResolvedType
 {
-    public new static IEnumerable<ResolvedBasicType> Values => [Integer, Boolean, String];
+    public new static IEnumerable<ResolvedBasicType> Values => [Integer, Boolean, String, List];
 
     public override string ToString()
         => SourceString;
@@ -18,6 +18,7 @@ public record BasicType
     public static ResolvedBasicType Integer = new("int");
     public static ResolvedBasicType Boolean = new("bool");
     public static ResolvedBasicType String = new("string");
+    public static ResolvedBasicType List = new("list");
 
     public static IEnumerable<BasicType> Values => Enumerable.Concat(ResolvedBasicType.Values, [Unresolved]);
 
@@ -28,6 +29,8 @@ public record BasicType
 
     public bool IsResolved()
     {
+        if (ReferenceEquals(this, List)) return false;
+
         return !ReferenceEquals(this, Unresolved);
     }
 
@@ -41,8 +44,8 @@ public record BasicType
 
     public bool Matches(IType other)
     {
-        // Unresolved basic type always matches any other type.
-        if (!IsResolved() || ReferenceEquals(other, Unresolved)) return true;
+        // Completely unresolved types match every type.
+        if (ReferenceEquals(this, Unresolved) || ReferenceEquals(other, Unresolved)) return true;
 
         // Resolved basic types only match themselves.
         return ReferenceEquals(this, other);

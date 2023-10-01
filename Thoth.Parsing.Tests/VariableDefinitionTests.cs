@@ -8,15 +8,17 @@ public class VariableDefinitionTests
 {
     [Test]
     public void VariableDefinitionStatement_Parses_WhenVariableTypeIsUnresolved_AndExpressionIsLiteral(
-        [ValueSource(typeof(ResolvedBasicType), nameof(ResolvedBasicType.Values))] ResolvedBasicType type)
+        [ResolvedTypes] IResolvedType type)
     {
-        var program = Parse(
+        var tokens = new List<Token> {
             Fakes.Type(BasicType.Unresolved),
             Fakes.Identifier("value"),
             Fakes.Symbol(SymbolType.Equals),
-            Fakes.Literal(type),
-            Fakes.Symbol(SymbolType.Semicolon)
-        );
+        };
+        Fakes.Literal(ref tokens, type);
+        tokens.Add(Fakes.Symbol(SymbolType.Semicolon));
+
+        var program = Parse(tokens);
 
         Assert.That(program.Statements, Has.Count.EqualTo(1), "Expected exactly one statement.");
         Assert.That(program.Statements, Has.Exactly(1).TypeOf<VariableDefinitionStatement>()
@@ -51,15 +53,17 @@ public class VariableDefinitionTests
 
     [Test]
     public void VariableDefinitionStatement_Parses_WhenVariableTypeIsResolved_AndExpressionIsMatchingLiteral(
-        [ValueSource(typeof(ResolvedBasicType), nameof(ResolvedBasicType.Values))] ResolvedBasicType type)
+        [ResolvedTypes] IResolvedType type)
     {
-        var program = Parse(
+        var tokens = new List<Token> {
             Fakes.Type(type),
             Fakes.Identifier("value"),
-            Fakes.Symbol(SymbolType.Equals),
-            Fakes.Literal(type),
-            Fakes.Symbol(SymbolType.Semicolon)
-        );
+            Fakes.Symbol(SymbolType.Equals)
+        };
+        Fakes.Literal(ref tokens, type);
+        tokens.Add(Fakes.Symbol(SymbolType.Semicolon));
+
+        var program = Parse(tokens);
 
         Assert.That(program.Statements, Has.Count.EqualTo(1), "Expected exactly one statement.");
         Assert.That(program.Statements, Has.Exactly(1).TypeOf<VariableDefinitionStatement>()
@@ -73,7 +77,7 @@ public class VariableDefinitionTests
 
     [Test]
     public void VariableDefinitionStatement_Parses_WhenVariableTypeIsResolved_AndExpressionTypeIsUnresolved(
-        [ValueSource(typeof(ResolvedBasicType), nameof(ResolvedBasicType.Values))] ResolvedBasicType type)
+        [ResolvedTypes] IResolvedType type)
     {
         var program = Parse(
             Fakes.Type(type),

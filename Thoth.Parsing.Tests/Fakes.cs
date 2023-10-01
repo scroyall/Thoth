@@ -34,11 +34,32 @@ public static class Fakes
     public static KeywordToken Keyword(KeywordType type)
         => new(type, SourceReference);
 
-    public static Token Literal(IResolvedType type)
+    public static void Literal(ref List<Token> tokens, IResolvedType type)
     {
-        if (type.Matches(BasicType.Integer)) return IntegerLiteral;
-        if (type.Matches(BasicType.String)) return StringLiteral;
-        if (type.Matches(BasicType.Boolean)) return BooleanLiteral;
+        if (type.Matches(BasicType.Integer))
+        {
+            tokens.Add(IntegerLiteral);
+            return;
+        }
+
+        if (type.Matches(BasicType.String))
+        {
+            tokens.Add(StringLiteral);
+            return;
+        }
+
+        if (type.Matches(BasicType.Boolean))
+        {
+            tokens.Add(BooleanLiteral);
+            return;
+        }
+
+        if (type.Matches(BasicType.List))
+        {
+            tokens.Add(Symbol(SymbolType.LeftSquareBracket));
+            tokens.Add(Symbol(SymbolType.RightSquareBracket));
+            return;
+        }
 
         throw new NotImplementedException();
     }

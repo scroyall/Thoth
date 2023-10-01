@@ -59,13 +59,16 @@ public class NotOperatorTests
     {
         if (type.Matches(BasicType.Boolean)) Assert.Ignore("Value type is boolean.");
 
-        Assert.Throws<MismatchedTypeException>(() => Parse(
+        var tokens = new List<Token>
+        {
             Fakes.Type(BasicType.Unresolved),
             Fakes.Identifier(),
             Fakes.Symbol(SymbolType.Equals),
-            Fakes.Symbol(SymbolType.Exclamation),
-            Fakes.Literal(type),
-            Fakes.Symbol(SymbolType.Semicolon)
-        ));
+            Fakes.Symbol(SymbolType.Exclamation)
+        };
+        Fakes.Literal(ref tokens, type);
+        tokens.Add(Fakes.Symbol(SymbolType.Semicolon));
+
+        Assert.Throws<MismatchedTypeException>(() => Parse(tokens));
     }
 }

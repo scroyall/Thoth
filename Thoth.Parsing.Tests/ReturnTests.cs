@@ -26,11 +26,13 @@ public class ReturnTests
     public void Return_Parses_WithLiteralValue(
         [ValueSource(typeof(ResolvedBasicType), nameof(ResolvedBasicType.Values))] ResolvedBasicType type)
     {
-        var program = Parse(
+        var tokens = new List<Token> {
             Fakes.Keyword(KeywordType.Return),
-            Fakes.Literal(type),
-            Fakes.Symbol(SymbolType.Semicolon)
-        );
+        };
+        Fakes.Literal(ref tokens, type);
+        tokens.Add(Fakes.Symbol(SymbolType.Semicolon));
+
+        var program = Parse(tokens);
 
         Assert.That(program.Statements, Has.Count.EqualTo(1), "Expected exactly one statement.");
         Assert.That(program.Statements, Has.Exactly(1).TypeOf<ReturnStatement>(), "Expected return statement.");

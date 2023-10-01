@@ -259,16 +259,21 @@ public class Parser
 
     private IType ParseType(out SourceReference source)
     {
-        switch (Tokens.Consume())
+        var outer = ConsumeToken<TypeToken>();
+        source = outer.Source;
+
+        var type = outer.Type;
+
+        if (TryConsumeSymbol(SymbolType.LeftChevron))
         {
-            case TypeToken typeToken:
-                source = typeToken.Source;
-                return typeToken.Type;
-            case { } token:
-                throw new UnexpectedTokenException(token);
-            default:
-                throw new UnexpectedEndOfInputException();
+            var parameter = ParseType(out _);
+
+            type = new ParameterizedType(type.Resolve(), parameter);
+
+            ConsumeSymbol(SymbolType.RightChevron);
         }
+
+        return type;
     }
 
     private ConditionalStatement ParseConditional()
