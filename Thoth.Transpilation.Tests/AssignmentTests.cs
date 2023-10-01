@@ -4,33 +4,25 @@ public class AssignmentTests
     : TranspilerTests
 {
     [Test]
-    public void Assignment_DoesNotThrow_WhenExpressionTypeMatchesDefinition(
-        [Values] BasicType type)
+    public void Assignment_WhenExpressionTypeMatchesVariable_Transpiles(
+        [ResolvedTypes()] IResolvedType variableType,
+        [ResolvedTypes()] IResolvedType expressionType)
     {
-        var definition = Program.FakeVariableDefinitionStatement(type: type);
+        if (!expressionType.Matches(variableType)) Assert.Ignore("Expression type does not match variable.");
 
-        Program.FakeAssignmentStatement(definition.Identifier, Program.CreateExpression(type));
+        var definition = Program.FakeVariableDefinitionStatement(type: variableType);
+
+        Program.FakeAssignmentStatement(definition.Identifier, Program.CreateExpression(expressionType));
 
         Transpile();
     }
 
     [Test]
-    public void Assignment_ThrowsUnresolvedTypeException_WhenExpressionTypeIsUnresolved(
-        [Values] BasicType variableType)
+    public void Assignment_WhenExpressionTypeDoesNotMatchVariable_ThrowsException(
+        [ResolvedTypes()] IResolvedType variableType,
+        [ResolvedTypes()] IResolvedType expressionType)
     {
-        var definition = Program.FakeVariableDefinitionStatement(type: variableType);
-
-        Program.FakeAssignmentStatement(definition.Identifier, Program.CreateUnresolvedExpression());
-
-        Assert.Throws<UnresolvedTypeException>(Transpile);
-    }
-
-    [Test]
-    public void Assignment_ThrowsMismatchedTypeException_WhenExpressionTypeDiffersFromDefinition(
-        [Values] BasicType variableType,
-        [Values] BasicType expressionType)
-    {
-        if (expressionType == variableType) Assert.Ignore("Expression type matches variable type.");
+        if (expressionType.Matches(variableType)) Assert.Ignore("Expression type matches variable.");
 
         var definition = Program.FakeVariableDefinitionStatement(type: variableType);
 

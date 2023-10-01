@@ -64,7 +64,6 @@ public class Parser
         return keyword.Type switch
         {
             KeywordType.Exit     => ParseExit(),
-            KeywordType.Var      => ParseVariableDefinition(),
             KeywordType.If       => ParseConditional(),
             KeywordType.While    => ParseWhile(),
             KeywordType.For      => ParseFor(),
@@ -203,11 +202,11 @@ public class Parser
         ConsumeSymbol(SymbolType.Equals);
 
         var expression = ParseExpression();
-        expression.Type.CheckMatches(type);
+        type = expression.Type.Match(type);
 
         ConsumeSymbol(SymbolType.Semicolon);
 
-        return new VariableDefinitionStatement(type ?? expression.Type, identifier.Name, expression, source);
+        return new VariableDefinitionStatement(type, identifier.Name, expression, source);
     }
 
     private FunctionDefinitionStatement ParseFunctionDefinition()
@@ -221,12 +220,12 @@ public class Parser
 
         ConsumeSymbol(SymbolType.RightParenthesis);
 
-        BasicType? type = null;
+        IResolvedType? type = null;
         if (TryConsumeSymbol(SymbolType.Minus))
         {
             ConsumeSymbol(SymbolType.RightChevron);
 
-            type = ParseType(out _);
+            type = ParseType(out _).Resolve();
         }
 
         var body = ParseStatement();
@@ -252,22 +251,19 @@ public class Parser
 
     private NamedParameter ParseNamedParameter()
     {
-        var type = ConsumeToken<TypeToken>().Type;
+        var type = ConsumeToken<TypeToken>().Type.Resolve();
         var name = ConsumeToken<IdentifierToken>().Name;
 
         return new(type, name);
     }
 
-    private BasicType? ParseType(out SourceReference source)
+    private IType ParseType(out SourceReference source)
     {
         switch (Tokens.Consume())
         {
             case TypeToken typeToken:
                 source = typeToken.Source;
                 return typeToken.Type;
-            case KeywordToken { Type: KeywordType.Var } varToken:
-                source = varToken.Source;
-                return null;
             case { } token:
                 throw new UnexpectedTokenException(token);
             default:
@@ -399,19 +395,14 @@ public class Parser
 
             // Parse the expression for the right hand side.
             var right = ParseExpression(operatorPrecedence);
-            right.Type.CheckMatches(left.Type);
 
-            // Binary expressions preferentially inherit their type from the left side, falling back to the right side.
-            var type = left.Type ?? right.Type;
+            // Get the type of the expression by matching the right side type to the left side.
+            var type = right.Type.Match(left.Type);
 
             if (operation.IsLogicalOperation())
             {
-                // Both sides of logical operations must match the boolean type.
-                left.Type.CheckMatches(BasicType.Boolean);
-                right.Type.CheckMatches(BasicType.Boolean);
-
                 // Logical operations are always of boolean type.
-                type = BasicType.Boolean;
+                type = type.Match(BasicType.Boolean);
             }
 
             left = new BinaryOperationExpression(type, operation, left, right);
@@ -599,7 +590,7 @@ public class Parser
         }
     }
 
-    private int DefineFunction(string name, IReadOnlyList<NamedParameter> parameters, BasicType? returnType, Statement body, SourceReference source)
+    private int DefineFunction(string name, IReadOnlyList<NamedParameter> parameters, IResolvedType? returnType, Statement body, SourceReference source)
     {
         if (Functions.ContainsKey(name)) throw new MultiplyDefinedFunctionException(name);
 

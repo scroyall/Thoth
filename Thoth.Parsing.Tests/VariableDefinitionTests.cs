@@ -3,16 +3,15 @@ using Thoth.Tokenization;
 
 namespace Thoth.Parsing.Tests;
 
-public class DefinitionTests
+public class VariableDefinitionTests
     : ParserTests
 {
     [Test]
-    public void VariableDefinitionStatement_Parses_WhenVariableTypeIsUnresolved_AndExpressionIsLiteral([Values] BasicType type)
+    public void VariableDefinitionStatement_Parses_WhenVariableTypeIsUnresolved_AndExpressionIsLiteral(
+        [ValueSource(typeof(ResolvedBasicType), nameof(ResolvedBasicType.Values))] ResolvedBasicType type)
     {
-        if (type == BasicType.String)  Assert.Ignore("String literal assignment is not implemented.");
-
         var program = Parse(
-            Fakes.Keyword(KeywordType.Var),
+            Fakes.Type(BasicType.Unresolved),
             Fakes.Identifier("value"),
             Fakes.Symbol(SymbolType.Equals),
             Fakes.Literal(type),
@@ -33,7 +32,7 @@ public class DefinitionTests
     public void VariableDefinitionStatement_Parses_WhenVariableTypeIsUnresolved_AndExpressionTypeIsUnresolved()
     {
         var program = Parse(
-            Fakes.Keyword(KeywordType.Var),
+            Fakes.Type(BasicType.Unresolved),
             Fakes.Identifier("value"),
             Fakes.Symbol(SymbolType.Equals),
             Fakes.Identifier(),
@@ -42,19 +41,18 @@ public class DefinitionTests
 
         Assert.That(program.Statements, Has.Count.EqualTo(1), "Expected exactly one statement.");
         Assert.That(program.Statements, Has.Exactly(1).TypeOf<VariableDefinitionStatement>()
-                                           .With.Property("Type").EqualTo(null),
+                                           .With.Property("Type").EqualTo(BasicType.Unresolved),
                                            $"Expected definition statement of unresolved type.");
         Assert.That(program.Statements, Has.Exactly(1).TypeOf<VariableDefinitionStatement>()
                                            .With.Property("Value")
-                                           .With.Property("Type").EqualTo(null),
+                                           .With.Property("Type").EqualTo(BasicType.Unresolved),
                                            $"Expected definition statement with value of unresolved type.");
     }
 
     [Test]
-    public void VariableDefinitionStatement_Parses_WhenVariableTypeIsResolved_AndExpressionIsMatchingLiteral([Values] BasicType type)
+    public void VariableDefinitionStatement_Parses_WhenVariableTypeIsResolved_AndExpressionIsMatchingLiteral(
+        [ValueSource(typeof(ResolvedBasicType), nameof(ResolvedBasicType.Values))] ResolvedBasicType type)
     {
-        if (type == BasicType.String)  Assert.Ignore("String literal assignment is not implemented.");
-
         var program = Parse(
             Fakes.Type(type),
             Fakes.Identifier("value"),
@@ -74,7 +72,8 @@ public class DefinitionTests
     }
 
     [Test]
-    public void VariableDefinitionStatement_Parses_WhenVariableTypeIsResolved_AndExpressionTypeIsUnresolved([Values] BasicType type)
+    public void VariableDefinitionStatement_Parses_WhenVariableTypeIsResolved_AndExpressionTypeIsUnresolved(
+        [ValueSource(typeof(ResolvedBasicType), nameof(ResolvedBasicType.Values))] ResolvedBasicType type)
     {
         var program = Parse(
             Fakes.Type(type),
@@ -90,7 +89,7 @@ public class DefinitionTests
                                            $"Expected definition statement with resolved type {type}.");
         Assert.That(program.Statements, Has.Exactly(1).TypeOf<VariableDefinitionStatement>()
                                            .With.Property("Value")
-                                           .With.Property("Type").EqualTo(null),
+                                           .With.Property("Type").EqualTo(BasicType.Unresolved),
                                            $"Expected definition statement with value of unresolved type.");
     }
 }

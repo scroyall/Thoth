@@ -263,7 +263,7 @@ public class Transpiler
 
             // Generate the return value, pushing it on to the stack, and check it matches the type expected by the
             // function.
-            TryGenerateExpression(statement.Value).CheckMatches(type);
+            TryGenerateExpression(statement.Value).Match(type);
 
             // Pop the return value off the stack.
             GeneratePop("rax");
@@ -272,7 +272,7 @@ public class Transpiler
             var parameter = GetDefinition("_return");
 
             // Check the type of the hidden return parameter matches the type expected by the function.
-            parameter.Type.CheckMatches(type);
+            parameter.Type.Match(type);
 
             // Get the location of the hidden return parameter, and move the return value into it.
             var location = GetVariableLocation(parameter);
@@ -298,7 +298,7 @@ public class Transpiler
         GenerateConditionalLoop(
             generateTest: (breakLabel) =>
             {
-                TryGenerateExpression(loop.Condition).CheckMatches(BasicType.Boolean);
+                TryGenerateExpression(loop.Condition).Resolve().Match(BasicType.Boolean);
 
                 // Test the result of the condition expression and break out of the loop if it's zero.
                 GenerateTestZero(breakLabel);
@@ -336,7 +336,7 @@ public class Transpiler
     {
         WriteCommentLine(conditional);
 
-        TryGenerateExpression(conditional.Condition).CheckMatches(BasicType.Boolean);
+        TryGenerateExpression(conditional.Condition).Match(BasicType.Boolean);
 
         var label = $"{NextLabel}conditional";
         GenerateTestZero(label);
@@ -355,7 +355,7 @@ public class Transpiler
         WriteCommentLine(assignment);
 
         var definition = GetDefinition(assignment.Identifier);
-        TryGenerateExpression(assignment.Value).CheckMatches(definition.Type);
+        TryGenerateExpression(assignment.Value).Match(definition.Type);
 
         // Pop the result of the expression off the stack.
         GeneratePop("rax");
@@ -404,12 +404,9 @@ public class Transpiler
         WriteCommentLine(definition);
 
         // Generate the expression for the value, ensuring it's of a resolved type.
-        var expressionType = TryGenerateExpression(definition.Value);
+        var type = TryGenerateExpression(definition.Value).Match(definition.Type);
 
-        // Check the expression type matches the definition type.
-        expressionType.CheckMatches(definition.Type);
-
-        DefineLocalVariable(definition.Type ?? expressionType, definition.Identifier);
+        DefineLocalVariable(type, definition.Identifier);
 
         // Variable definitions don't generate any statements to guarantee a return.
         return false;
@@ -466,7 +463,7 @@ public class Transpiler
     {
         WriteCommentLine(assert);
 
-        TryGenerateExpression(assert.Condition).CheckMatches(BasicType.Boolean);
+        TryGenerateExpression(assert.Condition).Match(BasicType.Boolean);
 
         var label = $"{NextLabel}_assert_pass";
 
@@ -494,27 +491,21 @@ public class Transpiler
         switch (print.Value)
         {
             case StringExpression { } literal:
-                GeneratePrintStringLiteral(literal.Index);
-                break;
+                return GeneratePrintStringLiteral(literal.Index);
             case Expression { } expression:
+                // Generate the expression to be printed and ensure the type is resolved.
                 var type = TryGenerateExpression(expression);
 
-                switch (type)
-                {
-                    case BasicType.Integer:
-                        GeneratePrintSignedInteger();
-                        break;
-                    default:
-                        throw new NotImplementedException();
-                }
-                break;
+                if (type.Matches(BasicType.Integer)) return GeneratePrintSignedInteger();
+
+                throw new NotImplementedException();
         }
 
         // Prints don't generate any statements to guarantee a return.
         return false;
     }
 
-    private void GeneratePrintStringLiteral(int index)
+    private bool GeneratePrintStringLiteral(int index)
     {
         WriteCommentLine("print string");
         WriteLine($"mov rsi, string{index}"); // Set source register to the string.
@@ -522,9 +513,12 @@ public class Transpiler
         WriteLine("mov rax, SYSCALL_WRITE");
         WriteLine("mov rdi, STDOUT");
         WriteLine("syscall");
+
+        // Print cannot guarantee a return.
+        return false;
     }
 
-    private void GeneratePrintSignedInteger()
+    private bool GeneratePrintSignedInteger()
     {
         GenerateLabel("print_signed_integer");
         GeneratePop("rax"); // Pop the signed integer value off the stack.
@@ -571,6 +565,9 @@ public class Transpiler
         WriteLine("mov rax, SYSCALL_WRITE");
         WriteLine("mov rdi, STDOUT");
         WriteLine("syscall");
+
+        // Print cannot guarantee a return.
+        return false;
     }
 
     protected bool GenerateStatement(FunctionCallStatement call)
@@ -592,10 +589,10 @@ public class Transpiler
 
     #region Expressions
 
-    protected virtual BasicType TryGenerateExpression(Expression expression)
+    protected virtual IResolvedType TryGenerateExpression(Expression expression)
         => GenerateExpression(expression as dynamic);
 
-    protected BasicType GenerateExpression(Expression expression)
+    protected IResolvedType GenerateExpression(Expression expression)
     {
         // Catch any expressions which don't match an overload.
         throw new UnexpectedExpressionException(expression);
@@ -604,7 +601,7 @@ public class Transpiler
     /// <remarks>
     /// Push an integer value on to the stack.
     /// </remarks>
-    protected BasicType GenerateExpression(IntegerExpression integer)
+    protected IResolvedType GenerateExpression(IntegerExpression integer)
     {
         WriteCommentLine($"integer literal ({integer.Value})");
 
@@ -623,14 +620,14 @@ public class Transpiler
         return BasicType.Integer;
     }
 
-    protected BasicType GenerateExpression(FunctionCallExpression call)
+    protected IResolvedType GenerateExpression(FunctionCallExpression call)
     {
         WriteCommentLine(call);
 
         return GenerateFunctionCall(call) ?? throw new InvalidFunctionException($"Function '{call.Name}' must return a value when used as an expression.");
     }
 
-    protected BasicType? GenerateFunctionCall(IFunctionCall call)
+    protected IResolvedType? GenerateFunctionCall(IFunctionCall call)
     {
         // Check that the function has been defined.
         if (!IsFunctionDefined(call.Name)) throw new UndefinedFunctionException(call.Name);
@@ -651,7 +648,7 @@ public class Transpiler
         for (int index = 0; index < definition.Parameters.Count; index++)
         {
             // Generate the expression for the parameter and check the type matches the definition.
-            TryGenerateExpression(call.Parameters[index]).CheckMatches(definition.Parameters[index].Type);
+            TryGenerateExpression(call.Parameters[index]).Match(definition.Parameters[index].Type);
         }
 
         // Get the label for the function and execute it.
@@ -668,7 +665,7 @@ public class Transpiler
         return definition.ReturnType;
     }
 
-    protected BasicType GenerateExpression(BooleanLiteralExpression boolean)
+    protected IResolvedType GenerateExpression(BooleanLiteralExpression boolean)
     {
         WriteCommentLine($"boolean literal ({boolean.Value})");
 
@@ -680,7 +677,7 @@ public class Transpiler
     /// <remarks>
     /// Push a copy of a variable's value on to the stack.
     /// </remarks>
-    protected BasicType GenerateExpression(VariableExpression variable)
+    protected IResolvedType GenerateExpression(VariableExpression variable)
     {
         WriteCommentLine(variable);
 
@@ -695,13 +692,13 @@ public class Transpiler
     /// Generate the left and right hand sides of a binary expression, perform an operation, and push the result on to
     /// the stack.
     /// </remarks>
-    protected BasicType GenerateExpression(BinaryOperationExpression expression)
+    protected IResolvedType GenerateExpression(BinaryOperationExpression expression)
     {
         WriteCommentLine(expression);
 
         // Generate the left and right hand side sub-expressions, pushing their results on to the stack.
         var expressionType = TryGenerateExpression(expression.Left);
-        TryGenerateExpression(expression.Right).CheckMatches(expressionType);
+        TryGenerateExpression(expression.Right).Match(expressionType);
 
         // Pop the left and right hand side values from the top of the stack into two registers. 
         GeneratePop("rbx"); // Right hand side.
@@ -712,7 +709,7 @@ public class Transpiler
         if (operation.IsComparisonOperation()) return GenerateComparisonOperation(operation);
         if (operation.IsLogicalOperation())
         {
-            expressionType.CheckMatches(BasicType.Boolean);
+            expressionType.Match(BasicType.Boolean);
 
             return GenerateLogicalBinaryOperation(operation);
         }
@@ -720,7 +717,7 @@ public class Transpiler
         throw new UnexpectedExpressionException(expression);
     }
 
-    protected BasicType GenerateMathematicalBinaryOperation(OperatorType operation)
+    protected IResolvedType GenerateMathematicalBinaryOperation(OperatorType operation)
     {
         switch (operation)
         {
@@ -751,7 +748,7 @@ public class Transpiler
         return BasicType.Integer;
     }
 
-    protected BasicType GenerateComparisonOperation(OperatorType operation)
+    protected IResolvedType GenerateComparisonOperation(OperatorType operation)
     {
         WriteCommentLine(operation.ToSourceString());
 
@@ -768,7 +765,7 @@ public class Transpiler
         };
     }
 
-    protected BasicType GenerateComparisonOperation(string comparison)
+    protected IResolvedType GenerateComparisonOperation(string comparison)
     {
         WriteLine($"xor rcx, rcx"); // Zero out the result register.
         WriteLine($"cmp rax, rbx"); // Compare the two value registers.
@@ -778,7 +775,7 @@ public class Transpiler
         return BasicType.Boolean;
     }
 
-    protected BasicType GenerateLogicalBinaryOperation(OperatorType operation)
+    protected IResolvedType GenerateLogicalBinaryOperation(OperatorType operation)
     {
         switch (operation)
         {
@@ -799,12 +796,12 @@ public class Transpiler
         return BasicType.Boolean;
     }
 
-    protected BasicType GenerateExpression(UnaryOperationExpression expression)
+    protected IResolvedType GenerateExpression(UnaryOperationExpression expression)
     {
         WriteCommentLine(expression);
 
         // Generate the sub-expression, pushing its result onto the stack.
-        TryGenerateExpression(expression.Value).CheckMatches(expression.Type);
+        TryGenerateExpression(expression.Value).Match(expression.Type);
 
         // Pop the sub-expression value from the top of the stack.
         GeneratePop("rax");
@@ -817,10 +814,10 @@ public class Transpiler
         };
     }
 
-    protected BasicType GenerateNotOperation(UnaryOperationExpression expression)
+    protected IResolvedType GenerateNotOperation(UnaryOperationExpression expression)
     {
         // The not operation can only be applied to boolean expressions.
-        expression.Type.CheckMatches(BasicType.Boolean);
+        expression.Type.Match(BasicType.Boolean);
 
         WriteCommentLine("not");
 
@@ -925,7 +922,7 @@ public class Transpiler
     /// </summary>
     /// <param name="identifier">Unique identifier for the variable.</param>
     /// <exception cref="MultiplyDefinedVariableException">If the variable is already defined.</exception>
-    private void DefineLocalVariable(BasicType type, string identifier)
+    private void DefineLocalVariable(IResolvedType type, string identifier)
     {
         if (IsDefined(identifier)) throw new MultiplyDefinedVariableException(identifier);
 
@@ -936,7 +933,7 @@ public class Transpiler
         _definitions[identifier] = new(VariableScope.Local, type, _stackSize);
     }
 
-    private void DefineParameter(BasicType type, string identifier, int offset)
+    private void DefineParameter(IResolvedType type, string identifier, int offset)
     {
         if (IsDefined(identifier)) throw new MultiplyDefinedFunctionException(identifier);
 

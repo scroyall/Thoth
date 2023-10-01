@@ -4,9 +4,10 @@ class WhileTests
     : TranspilerTests
 {
     [Test]
-    public void WhileStatement_DoesNotThrow_WhenConditionTypeIsBoolean()
+    public void WhileStatement_DoesNotThrow_WhenConditionTypeMatchesBoolean(
+        [ResolvedTypes(LowerBound: "bool")] IResolvedType type)
     {
-        Program.FakeWhileStatement(condition: Program.CreateExpression(BasicType.Boolean));
+        Program.FakeWhileStatement(condition: Program.CreateExpression(type));
 
         Transpile();
     }
@@ -20,13 +21,5 @@ class WhileTests
         Program.FakeWhileStatement(condition: Program.CreateExpression(type));
 
         Assert.Throws<MismatchedTypeException>(Transpile);
-    }
-
-    [Test]
-    public void WhileStatement_ThrowsUnresolvedTypeException_WhenConditionTypeIsUnresolved()
-    {
-        Program.FakeWhileStatement(condition: Program.CreateUnresolvedExpression());
-
-        Assert.Throws<UnresolvedTypeException>(Transpile);
     }
 }

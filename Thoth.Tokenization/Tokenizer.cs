@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text;
 
 using Thoth.Tokenization.Tokens;
 using Thoth.Utils;
@@ -118,8 +119,8 @@ public class Tokenizer
             return new KeywordToken(keyword, SourceReference.OffsetBy(buffer.Length));
         }
 
-        // Check for types.
-        if (BasicTypeExtensions.TryParse(word, out var type))
+        // Check for basic types.
+        if (BasicType.TryParse(word) is { } type)
         {
             return new TypeToken(type, SourceReference.OffsetBy(buffer.Length));
         }

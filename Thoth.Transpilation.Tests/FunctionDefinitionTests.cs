@@ -12,7 +12,7 @@ public class FunctionDefinitionTests
     }
 
     [Test]
-    public void FunctionDefinitionWithReturnType_Transpiles_WithReturnStatement([Values] BasicType type)
+    public void FunctionDefinitionWithReturnType_Transpiles_WithReturnStatement([ResolvedTypes] IResolvedType type)
     {
         var returnStatement = Program.CreateReturnStatement(
             value: Program.CreateExpression(type));
@@ -25,7 +25,7 @@ public class FunctionDefinitionTests
     }
 
     [Test]
-    public void FunctionDefinitionWithReturnType_ThrowsException_WithoutReturnStatement([Values] BasicType type)
+    public void FunctionDefinitionWithReturnType_ThrowsException_WithoutReturnStatement([ResolvedTypes] IResolvedType type)
     {
         Program.FakeFunctionDefinitionStatement(
             returnType: type,
@@ -35,7 +35,7 @@ public class FunctionDefinitionTests
     }
 
     [Test]
-    public void FunctionDefinitionWithParameter_Transpiles_WithReferenceToParameter([Values] BasicType type)
+    public void FunctionDefinitionWithParameter_Transpiles_WithReferenceToParameter([ResolvedTypes] IResolvedType type)
     {
         var parameter = Program.CreateNamedParameter(type: type);
 
@@ -50,7 +50,7 @@ public class FunctionDefinitionTests
     }
 
     [Test]
-    public void FunctionDefinitionWithParameter_Throws_WithReferenceToVariableDefinedOutsideFunction([Values] BasicType type)
+    public void FunctionDefinitionWithParameter_Throws_WithReferenceToVariableDefinedOutsideFunction([ResolvedTypes] IResolvedType type)
     {
         var definition = Program.FakeVariableDefinitionStatement();
 
@@ -64,7 +64,7 @@ public class FunctionDefinitionTests
     }
 
     [Test]
-    public void FunctionDefinitionWithParameter_Transpiles_WithReferenceToVariableDefinedInsideFunction([Values] BasicType type)
+    public void FunctionDefinitionWithParameter_Transpiles_WithReferenceToVariableDefinedInsideFunction([ResolvedTypes] IResolvedType type)
     {
         var definition = Program.CreateVariableDefinitionStatement(type: type);
 

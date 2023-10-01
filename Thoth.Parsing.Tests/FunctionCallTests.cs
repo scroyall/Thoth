@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Thoth.Parsing.Expressions;
 using Thoth.Parsing.Statements;
 using Thoth.Tokenization;
@@ -9,7 +8,7 @@ public class FunctionCallTests
     : ParserTests
 {
     [Test]
-    public void FunctionCallWithoutParameters_Parses_AsStatement()
+    public void FunctionCall_WithoutParameters_ParsesAsStatement()
     {
         var name = Fakes.IdentifierName;
 
@@ -31,7 +30,7 @@ public class FunctionCallTests
     }
 
     [Test]
-    public void FunctionCallWithoutParameters_Parses_AsExpression()
+    public void FunctionCall_WithoutParameters_ParsesAsExpression()
     {
         var name = Fakes.IdentifierName;
 
@@ -62,7 +61,7 @@ public class FunctionCallTests
     }
 
     [Test]
-    public void FunctionCallWithSingleParameter_Parses_AsStatement()
+    public void FunctionCall_WithSingleParameter_ParsesAsStatement()
     {
         var variableName = Fakes.IdentifierName;
 
@@ -89,7 +88,7 @@ public class FunctionCallTests
     }
 
     [Test]
-    public void FunctionCallWithSingleParameter_Parses_AsExpression()
+    public void FunctionCall_WithSingleParameter_ParsesAsExpression()
     {
         var variableName = Fakes.IdentifierName;
 
@@ -124,7 +123,7 @@ public class FunctionCallTests
     }
 
     [Test]
-    public void FunctionCallWithMultipleParameters_Parses_AsStatement()
+    public void FunctionCall_WithMultipleParameters_ParsesAsStatement()
     {
         var firstName = Fakes.IdentifierName;
         var secondName = Fakes.IdentifierName;
@@ -155,7 +154,7 @@ public class FunctionCallTests
     }
 
     [Test]
-    public void FunctionCallWithMultipleParameters_Parses_AsExpression()
+    public void FunctionCall_WithMultipleParameters_ParsesAsExpression()
     {
         var firstName = Fakes.IdentifierName;
         var secondName = Fakes.IdentifierName;

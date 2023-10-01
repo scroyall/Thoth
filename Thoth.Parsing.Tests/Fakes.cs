@@ -34,18 +34,16 @@ public static class Fakes
     public static KeywordToken Keyword(KeywordType type)
         => new(type, SourceReference);
 
-    public static Token Literal(BasicType type)
+    public static Token Literal(IResolvedType type)
     {
-        return type switch
-        {
-            BasicType.Integer => IntegerLiteral,
-            BasicType.String  => StringLiteral,
-            BasicType.Boolean => BooleanLiteral,
-            _ => throw new NotImplementedException()
-        };
+        if (type.Matches(BasicType.Integer)) return IntegerLiteral;
+        if (type.Matches(BasicType.String)) return StringLiteral;
+        if (type.Matches(BasicType.Boolean)) return BooleanLiteral;
+
+        throw new NotImplementedException();
     }
 
-    public static NamedParameter NamedParameter(BasicType type)
+    public static NamedParameter NamedParameter(IResolvedType type)
         => new(type, IdentifierName);
 
     public static void Operation(ref List<Token> tokens, OperatorType operation)
@@ -71,6 +69,9 @@ public static class Fakes
     public static SymbolToken Symbol(SymbolType type)
         => new(type, SourceReference);
 
-    public static TypeToken Type(BasicType type)
-        => new(type, SourceReference);
+    public static TypeToken Type(IType? type = null)
+        => new(
+            type ?? BasicType.Integer,
+            SourceReference
+        );
 }

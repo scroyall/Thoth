@@ -7,7 +7,7 @@ public class BinaryLogicalOperationTests
     : TranspilerTests
 {
     [Test]
-    public void BinaryLogicalOperation_Transpiles_WhenValuesAreBoolean(
+    public void BinaryLogicalOperation_WhenOperandsMatchBoolean_Transpiles(
         [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.BinaryLogical))] OperatorType operation)
     {
         // TODO: Replace variable definition with a fake expression generator.
@@ -22,31 +22,14 @@ public class BinaryLogicalOperationTests
 
         Transpile();
     }
-
-    [Test]
-    public void BinaryLogicalOperation_ThrowsException_WhenValuesAreUnresolved(
-        [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.BinaryLogical))] OperatorType operation)
-    {
-        // TODO: Replace variable definition with a fake expression generator.
-        Program.FakeVariableDefinitionStatement(
-            value: new BinaryOperationExpression(
-                BasicType.Boolean,
-                operation,
-                Left: Program.CreateUnresolvedExpression(),
-                Right: Program.CreateUnresolvedExpression()
-            )
-        );
-
-        Assert.Throws<UnresolvedTypeException>(Transpile);
-    }
     
     [Test]
-    public void BinaryLogicalOperation_ThrowsException_WhenValuesAreNotBoolean(
+    public void BinaryLogicalOperation_WhenOperandDoesNotMatchBoolean_ThrowsException(
         [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.BinaryLogical))] OperatorType operation,
-        [Values] BasicType leftType,
-        [Values] BasicType rightType)
+        [ResolvedTypes()] IResolvedType leftType,
+        [ResolvedTypes()] IResolvedType rightType)
     {
-        if (leftType == BasicType.Boolean && rightType == BasicType.Boolean) Assert.Ignore("Values are both boolean.");
+        if (leftType.Matches(BasicType.Boolean) && rightType.Matches(BasicType.Boolean)) Assert.Ignore("Operands both match boolean.");
 
         // TODO: Replace variable definition with a fake expression generator.
         Program.FakeVariableDefinitionStatement(

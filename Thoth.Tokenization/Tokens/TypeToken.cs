@@ -1,16 +1,14 @@
 namespace Thoth.Tokenization.Tokens;
 
 public class TypeToken
-    : ValueToken<BasicType>
+    : ValueToken<IType>
 {
-    public BasicType Type => Value;
+    public IType Type => Value;
 
-    public TypeToken(BasicType type, SourceReference source)
+    public TypeToken(IType type, SourceReference source)
         : base(type, source)
     { }
 
     public override string ToString()
-    {
-        return Type.ToString();
-    }
+        => Type.ToString();
 }

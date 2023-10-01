@@ -21,8 +21,8 @@ public class VariableDefinitionTests
 
     [Test]
     public void DefinitionStatement_ThrowsMismatchedTypeException_WhenExpressionTypeDoesNotMatchVariableType(
-        [Values] BasicType variableType,
-        [Values] BasicType expressionType)
+        [Values] IType variableType,
+        [Values] IType expressionType)
     {
         if (expressionType.Matches(variableType)) Assert.Ignore("Expression type matches variable type.");
 

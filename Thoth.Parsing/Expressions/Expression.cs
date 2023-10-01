@@ -1,6 +1,6 @@
 namespace Thoth.Parsing.Expressions;
 
-public record Expression(BasicType? Type)
+public record Expression(IType Type)
 {
     public override string ToString()
     {
@@ -12,13 +12,13 @@ public record Expression(BasicType? Type)
 
 public static class ExpressionExtensions
 {
-    public static BasicType? FindMostExactType(this IEnumerable<Expression> expressions)
+    public static IType FindMostExactType(this IEnumerable<Expression> expressions)
     {
-        BasicType? type = null;
+        IType type = BasicType.Unresolved;
 
-        foreach (var expression in expressions)
+        foreach (Expression expression in expressions)
         {
-            type = expression.Type.CheckMatches(type);
+            type = expression.Type.Match(type);
         }
 
         return type;

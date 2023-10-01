@@ -6,14 +6,15 @@ public class NotOperationTests
     : TranspilerTests
 {
     [Test]
-    public void Transpiles_NotOperation_WhenValueIsBoolean()
+    public void Transpiles_NotOperation_WhenValueTypeMatchesBoolean(
+        [ResolvedTypes(LowerBound: "bool")] IResolvedType type)
     {
         // TODO: Replace variable definition with a fake expression generator.
         Program.FakeVariableDefinitionStatement(
             value: new UnaryOperationExpression(
                 BasicType.Boolean,
                 OperatorType.Not,
-                Program.CreateExpression(BasicType.Boolean)
+                Program.CreateExpression(type)
             )
         );
 

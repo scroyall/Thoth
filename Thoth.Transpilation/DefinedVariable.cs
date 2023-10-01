@@ -6,4 +6,4 @@ public enum VariableScope
     Parameter
 }
 
-public record DefinedVariable(VariableScope Scope, BasicType Type, int Offset);
+public record DefinedVariable(VariableScope Scope, IResolvedType Type, int Offset);

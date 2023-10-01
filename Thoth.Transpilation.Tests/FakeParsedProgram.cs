@@ -5,7 +5,7 @@ using Thoth.Tokenization;
 
 namespace Thoth.Transpilation.Tests;
 
-public record FakeExpression(BasicType? type)
+public record FakeExpression(IType type)
     : Expression(type);
 
 public record FakeStatement()
@@ -24,7 +24,7 @@ public class FakeParsedProgram
 
     public int NameCount = 0;
 
-    public DefinedFunction FakeDefinedFunction(string? name = null, List<NamedParameter>? parameters = null, BasicType? returnType = null, Statement? body = null)
+    public DefinedFunction FakeDefinedFunction(string? name = null, List<NamedParameter>? parameters = null, IResolvedType? returnType = null, Statement? body = null)
     {
         var defined = new DefinedFunction(
             name ?? $"function{++NameCount}",
@@ -70,7 +70,7 @@ public class FakeParsedProgram
         => AddStatement(
             new AssignmentStatement(
                 identifier,
-                value ?? CreateUnresolvedExpression(),
+                value ?? CreateExpression(BasicType.Integer),
                 FakeSourceReference
             )
         );
@@ -105,14 +105,14 @@ public class FakeParsedProgram
             )
         );
 
-    public FunctionDefinitionStatement FakeFunctionDefinitionStatement(string? name = null, List<NamedParameter>? parameters = null, BasicType? returnType = null, Statement? body = null)
+    public FunctionDefinitionStatement FakeFunctionDefinitionStatement(string? name = null, List<NamedParameter>? parameters = null, IResolvedType? returnType = null, Statement? body = null)
         => AddStatement(
             new FunctionDefinitionStatement(
                 FakeDefinedFunction(name, parameters, returnType, body).Name, FakeSourceReference
             )
         );
 
-    public NamedParameter CreateNamedParameter(BasicType type, string? name = null)
+    public NamedParameter CreateNamedParameter(IResolvedType type, string? name = null)
         => new(type, name ?? $"parameter{++NameCount}");
 
     public PrintStatement FakePrintStatement(Expression? value = null)
@@ -132,14 +132,14 @@ public class FakeParsedProgram
     public ScopeStatement FakeScopeStatement(List<Statement>? body = null)
         => new((body ?? []).ToList(), FakeSourceReference);
 
-    public VariableDefinitionStatement FakeVariableDefinitionStatement(BasicType? type = null, string? name = null, Expression? value = null)
+    public VariableDefinitionStatement FakeVariableDefinitionStatement(IType? type = null, string? name = null, Expression? value = null)
         => AddStatement(CreateVariableDefinitionStatement(type, name, value));
 
-    public VariableDefinitionStatement CreateVariableDefinitionStatement(BasicType? type = null, string? name = null, Expression? value = null)
+    public VariableDefinitionStatement CreateVariableDefinitionStatement(IType? type = null, string? name = null, Expression? value = null)
         => new(
-            type,
+            type ?? BasicType.Unresolved,
             name ?? $"variable{++NameCount}",
-            value ?? CreateExpression(type),
+            value ?? CreateExpression(type ?? BasicType.Unresolved),
             FakeSourceReference
         );
 
@@ -156,11 +156,8 @@ public class FakeParsedProgram
 
 #region Expressions
 
-    public FakeExpression CreateExpression(BasicType? type)
+    public FakeExpression CreateExpression(IType type)
         => new(type);
-
-    public FakeExpression CreateUnresolvedExpression()
-        => new(null);
 
     public VariableExpression CreateVariableExpression(string? identifier = null)
         => new(identifier ?? $"variable{++NameCount}");

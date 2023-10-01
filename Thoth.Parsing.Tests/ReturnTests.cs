@@ -23,7 +23,8 @@ public class ReturnTests
     }
 
     [Test]
-    public void Return_Parses_WithLiteralValue([Values] BasicType type)
+    public void Return_Parses_WithLiteralValue(
+        [ValueSource(typeof(ResolvedBasicType), nameof(ResolvedBasicType.Values))] ResolvedBasicType type)
     {
         var program = Parse(
             Fakes.Keyword(KeywordType.Return),

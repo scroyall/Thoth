@@ -1,4 +1,4 @@
 namespace Thoth.Parsing.Expressions;
 
-public record BinaryExpression(BasicType? Type, Expression Left, Expression Right)
+public record BinaryExpression(IType Type, Expression Left, Expression Right)
     : Expression(Type);

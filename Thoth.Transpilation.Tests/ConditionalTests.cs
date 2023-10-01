@@ -4,29 +4,20 @@ class ConditionalTests
     : TranspilerTests
 {
     [Test]
-    public void ConditionalStatement_DoesNotThrow_WhenConditionTypeIsBoolean()
+    public void ConditionalStatement_WhenConditionTypeMatchesBoolean_Transpiles(
+        [ResolvedTypes(LowerBound: "bool")] IResolvedType type)
     {
-        Program.FakeConditionalStatement(condition: Program.CreateExpression(BasicType.Boolean));
+        Program.FakeConditionalStatement(condition: Program.CreateExpression(type));
 
         Transpile();
     }
 
     [Test]
-    public void ConditionalStatement_ThrowsMismatchedTypeException_WhenConditionTypeIsNotBoolean(
-        [Values] BasicType type)
+    public void ConditionalStatement_WhenConditionTypeDoesNotMatchBoolean_ThrowsException(
+        [ResolvedTypes(UpperBound: "bool")] IResolvedType type)
     {
-        if (type == BasicType.Boolean) Assert.Ignore("Type is boolean.");
-
         Program.FakeConditionalStatement(condition: Program.CreateExpression(type));
 
         Assert.Throws<MismatchedTypeException>(Transpile);
-    }
-
-    [Test]
-    public void ConditionalStatement_ThrowsUnresolvedTypeException_WhenConditionTypeIsUnresolved()
-    {
-        Program.FakeConditionalStatement(condition: Program.CreateUnresolvedExpression());
-
-        Assert.Throws<UnresolvedTypeException>(Transpile);
     }
 }

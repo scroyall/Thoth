@@ -11,7 +11,7 @@ public class NotOperatorTests
     public void NotOperator_Parses_WhenOperandIsBoolean()
     {
         var program = Parse(
-            Fakes.Keyword(KeywordType.Var),
+            Fakes.Type(BasicType.Unresolved),
             Fakes.Identifier(),
             Fakes.Symbol(SymbolType.Equals),
             Fakes.Symbol(SymbolType.Exclamation),
@@ -34,7 +34,7 @@ public class NotOperatorTests
     public void NotOperator_Parses_WhenOperandTypeIsUnresolved()
     {
         var program = Parse(
-            Fakes.Keyword(KeywordType.Var),
+            Fakes.Type(BasicType.Unresolved),
             Fakes.Identifier(),
             Fakes.Symbol(SymbolType.Equals),
             Fakes.Symbol(SymbolType.Exclamation),
@@ -54,17 +54,17 @@ public class NotOperatorTests
     }
 
     [Test]
-    public void NotOperator_Parses_WhenOperandIsNotBoolean([Values] BasicType valueType)
+    public void NotOperator_ThrowsException_WhenOperandIsNonBooleanLiteral(
+        [ValueSource(typeof(ResolvedBasicType), nameof(ResolvedBasicType.Values))] ResolvedBasicType type)
     {
-        if (valueType == BasicType.Boolean) Assert.Ignore("Value type is boolean.");
-        if (valueType == BasicType.String)  Assert.Ignore("String literals cannot be parsed as expressions yet.");
+        if (type.Matches(BasicType.Boolean)) Assert.Ignore("Value type is boolean.");
 
         Assert.Throws<MismatchedTypeException>(() => Parse(
-            Fakes.Keyword(KeywordType.Var),
+            Fakes.Type(BasicType.Unresolved),
             Fakes.Identifier(),
             Fakes.Symbol(SymbolType.Equals),
             Fakes.Symbol(SymbolType.Exclamation),
-            Fakes.Literal(valueType),
+            Fakes.Literal(type),
             Fakes.Symbol(SymbolType.Semicolon)
         ));
     }

@@ -11,7 +11,7 @@ public class ListTests
     public void List_WithNoExpression_HasNoMembers()
     {
         var program = Parse(
-            Fakes.Keyword(KeywordType.Var),
+            Fakes.Type(BasicType.Unresolved),
             Fakes.Identifier(),
             Fakes.Symbol(SymbolType.Equals),
             Fakes.Symbol(SymbolType.LeftSquareBracket),
@@ -32,7 +32,7 @@ public class ListTests
     public void List_WithOneExpression_HasOneMember()
     {
         var program = Parse(
-            Fakes.Keyword(KeywordType.Var),
+            Fakes.Type(BasicType.Unresolved),
             Fakes.Identifier(),
             Fakes.Symbol(SymbolType.Equals),
             Fakes.Symbol(SymbolType.LeftSquareBracket),
@@ -54,7 +54,7 @@ public class ListTests
     public void List_WithMultipleExpressions_HasMultipleMembers()
     {
         var program = Parse(
-            Fakes.Keyword(KeywordType.Var),
+            Fakes.Type(BasicType.Unresolved),
             Fakes.Identifier(),
             Fakes.Symbol(SymbolType.Equals),
             Fakes.Symbol(SymbolType.LeftSquareBracket),
@@ -82,7 +82,7 @@ public class ListTests
         Assert.Throws<MismatchedTypeException>(() =>
         {
             Parse(
-                Fakes.Keyword(KeywordType.Var),
+                Fakes.Type(BasicType.Unresolved),
                 Fakes.Identifier(),
                 Fakes.Symbol(SymbolType.Equals),
                 Fakes.Symbol(SymbolType.LeftSquareBracket),
@@ -98,10 +98,11 @@ public class ListTests
     }
 
     [Test]
-    public void List_AssumesMembersType_WhenMembersTypesAreResolved([Values] BasicType type)
+    public void List_AssumesMembersType_WhenMembersTypesAreResolved(
+        [ValueSource(typeof(ResolvedBasicType), nameof(ResolvedBasicType.Values))] ResolvedBasicType type)
     {
         var program = Parse(
-            Fakes.Keyword(KeywordType.Var),
+            Fakes.Type(BasicType.Unresolved),
             Fakes.Identifier(),
             Fakes.Symbol(SymbolType.Equals),
             Fakes.Symbol(SymbolType.LeftSquareBracket),
@@ -127,7 +128,7 @@ public class ListTests
     public void List_TypeIsUnresolved_WhenMembersTypesAreUnresolved()
     {
         var program = Parse(
-            Fakes.Keyword(KeywordType.Var),
+            Fakes.Type(BasicType.Unresolved),
             Fakes.Identifier(),
             Fakes.Symbol(SymbolType.Equals),
             Fakes.Symbol(SymbolType.LeftSquareBracket),
@@ -146,6 +147,6 @@ public class ListTests
         Assert.That(definition.Value, Is.TypeOf<ListLiteralExpression>());
         var list = definition.Value as ListLiteralExpression ?? throw new NullReferenceException();
 
-        Assert.That(list.Type, Is.Null);
+        Assert.That(list.Type, Is.EqualTo(BasicType.Unresolved));
     }
 }

@@ -13,12 +13,4 @@ public class PrintTests
 
     // TODO: Add test for string literal.
     // TODO: Add test for boolean.
-
-    [Test]
-    public void Print_ThrowsUnresolvedTypeException_WhenExpressionTypeIsUnresolved()
-    {
-        Program.FakePrintStatement(value: Program.CreateUnresolvedExpression());
-
-        Assert.Throws<UnresolvedTypeException>(Transpile);
-    }
 }

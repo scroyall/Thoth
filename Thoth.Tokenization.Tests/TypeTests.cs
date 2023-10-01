@@ -6,9 +6,10 @@ public class TypeTests
     : TokenizerTests
 {
     [Test]
-    public void ParsesType([Values] BasicType type)
+    public void ParsesBasicType(
+        [ValueSource(typeof(BasicType), nameof(BasicType.Values))] BasicType type)
     {
-        var tokenized = Tokenize($"{type.ToSourceString()}");
+        var tokenized = Tokenize($"{type}");
 
         Assert.That(tokenized.Tokens, Has.Count.EqualTo(1), "Expected exactly one token.");
         Assert.That(tokenized.Tokens, Has.Exactly(1).TypeOf<TypeToken>()
