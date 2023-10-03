@@ -10,7 +10,7 @@ public class LiteralExpressionTests
     public void Transpiles_BooleanLiteral_WithTrueValue()
     {
         // TODO: Replace variable definition with a fake expression generator.
-        Program.FakeVariableDefinitionStatement(value: new BooleanLiteralExpression(true));
+        Program.FakeVariableDefinitionStatement(Type.Boolean, value: new BooleanLiteralExpression(true));
 
         Transpile();
     }

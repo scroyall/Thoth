@@ -1,10 +1,8 @@
 namespace Thoth.Parsing.Expressions;
 
 public record BooleanLiteralExpression(bool Value)
-    : Expression(BasicType.Boolean)
+    : Expression(Thoth.Type.Boolean)
 {
     protected override string ArgumentsToString()
-    {
-        return Value.ToString();
-    }
+        => Value.ToString();
 }

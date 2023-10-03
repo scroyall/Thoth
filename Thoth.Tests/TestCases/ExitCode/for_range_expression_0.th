@@ -1,5 +1,5 @@
-var start = 1;
-var end = 10;
+int start = 1;
+int end = 10;
 for (i in start..end)
 {
     # Changes to the variables in the range do not affect the range after the loop starts.

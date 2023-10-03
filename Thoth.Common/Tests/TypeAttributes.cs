@@ -4,27 +4,19 @@ using System.Collections;
 namespace Thoth.Tests;
 
 [AttributeUsage(AttributeTargets.Parameter, AllowMultiple=true, Inherited=false)]
-public class TypesAttribute(string LowerBound = "", string UpperBound = "")
+public class TypesAttribute(string? Except = null)
     : Attribute, IParameterDataSource
 {
     public IEnumerable GetData(IParameterInfo parameter)
     {
-        return TypeValueSources.Any(
-            lowerBound: BasicType.TryParse(LowerBound),
-            upperBound: BasicType.TryParse(UpperBound)
-        );
-    }
-}
+        var result = TypeValueSources.All;
 
-[AttributeUsage(AttributeTargets.Parameter, AllowMultiple=true, Inherited=false)]
-public class ResolvedTypesAttribute(string LowerBound = "", string UpperBound = "")
-    : Attribute, IParameterDataSource
-{
-    public IEnumerable GetData(IParameterInfo parameter)
-    {
-        return TypeValueSources.Resolved(
-            lowerBound: BasicType.TryParse(LowerBound),
-            upperBound: BasicType.TryParse(UpperBound)
-        );
+        if (Except is not null)
+        {
+            var excluded = Enum.Parse<BuiltinType>(Except);
+            result = result.Where(t => t.Root != excluded);
+        }
+
+        return result;
     }
 }

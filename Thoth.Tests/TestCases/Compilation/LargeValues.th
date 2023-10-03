@@ -1,11 +1,11 @@
-var highest = 9223372036854775807;
+int highest = 9223372036854775807;
 print("9223372036854775807 = ");
 print(highest);
 print("\n");
 
-var lowest = 9223372036854775807;
-print("9223372036854775807 = ");
+int lowest = -9223372036854775807;
+print("-9223372036854775807 = ");
 print(lowest);
 print("\n");
 
-assert(highest - lowest == 0);
+assert(highest + lowest == 0);

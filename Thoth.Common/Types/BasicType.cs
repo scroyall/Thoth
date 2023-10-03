@@ -1,71 +1,76 @@
+using System.Text;
+
 namespace Thoth;
 
-public record ResolvedBasicType(string source)
-    : BasicType(source), IResolvedType
+public record Type(BuiltinType Root, params Type[] Parameters)
 {
-    public new static IEnumerable<ResolvedBasicType> Values => [Integer, Boolean, String, List];
+#region Built-in Types
 
-    public override string ToString()
-        => SourceString;
-}
+    public static Type Integer = new(BuiltinType.Int);
 
-public record BasicType
-    : IType
-{
-    public readonly string SourceString;
+    public static Type Boolean = new(BuiltinType.Bool);
 
-    public static BasicType Unresolved = new("var");
-    public static ResolvedBasicType Integer = new("int");
-    public static ResolvedBasicType Boolean = new("bool");
-    public static ResolvedBasicType String = new("string");
-    public static ResolvedBasicType List = new("list");
+    public static Type String = new(BuiltinType.String);
 
-    public static IEnumerable<BasicType> Values => Enumerable.Concat(ResolvedBasicType.Values, [Unresolved]);
+    public static Type List(Type parameter) => new(BuiltinType.List, [parameter]);
 
-    internal BasicType(string source)
+#endregion
+
+    public bool HasParameters => Parameters.Length > 0;
+
+    public bool Matches(Type other)
     {
-        SourceString = source;
+        return Equals(other);
     }
 
-    public bool IsResolved()
-    {
-        if (ReferenceEquals(this, List)) return false;
-
-        return !ReferenceEquals(this, Unresolved);
-    }
-
-    public IType Match(IType other)
+    public Type Match(Type other)
     {
         if (!Matches(other)) throw new MismatchedTypeException(other, this);
 
-        // Prefer to return a resolved type, if possible.
-        return IsResolved() ? this : other;
-    }
-
-    public bool Matches(IType other)
-    {
-        // Completely unresolved types match every type.
-        if (ReferenceEquals(this, Unresolved) || ReferenceEquals(other, Unresolved)) return true;
-
-        // Resolved basic types only match themselves.
-        return ReferenceEquals(this, other);
-    }
-
-    public IResolvedType Resolve()
-    {
-        return (this as ResolvedBasicType) ?? throw new UnresolvedTypeException();
+        return this;
     }
 
     public override string ToString()
-        => SourceString;
-
-    public static BasicType? TryParse(string source)
     {
-        foreach (var type in Values)
+        StringBuilder builder = new(Root.ToString());
+
+        if (HasParameters)
         {
-            if (source == type.SourceString) return type;
+            builder.Append('<');
+
+            var parametersAsStrings = Parameters.Select(p => p.ToString());
+            builder.Append(string.Join(", ", parametersAsStrings));
+
+            builder.Append('>');
         }
 
-        return null;
+        return builder.ToString();
+    }
+
+    public override int GetHashCode()
+    {
+        var hash = Root.GetHashCode();
+
+        foreach (var parameter in Parameters)
+        {
+            hash = HashCode.Combine(hash, parameter.GetHashCode());
+        }
+
+        return hash;
+    }
+
+    public virtual bool Equals(Type? obj)
+    {
+        if (obj is not Type type) return false;
+
+        if (type.Root != Root) return false;
+        if (type.Parameters.Length != Parameters.Length) return false;
+
+        for (int i = 0; i < Parameters.Length; i++)
+        {
+            if (type.Parameters[i] != Parameters[i]) return false;
+        }
+
+        return true;
     }
 }

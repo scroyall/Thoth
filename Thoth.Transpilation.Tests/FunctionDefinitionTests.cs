@@ -12,7 +12,7 @@ public class FunctionDefinitionTests
     }
 
     [Test]
-    public void FunctionDefinitionWithReturnType_Transpiles_WithReturnStatement([ResolvedTypes] IResolvedType type)
+    public void FunctionDefinitionWithReturnType_Transpiles_WithReturnStatement([Types] Type type)
     {
         var returnStatement = Program.CreateReturnStatement(
             value: Program.CreateExpression(type));
@@ -25,7 +25,7 @@ public class FunctionDefinitionTests
     }
 
     [Test]
-    public void FunctionDefinitionWithReturnType_ThrowsException_WithoutReturnStatement([ResolvedTypes] IResolvedType type)
+    public void FunctionDefinitionWithReturnType_ThrowsException_WithoutReturnStatement([Types] Type type)
     {
         Program.FakeFunctionDefinitionStatement(
             returnType: type,
@@ -35,7 +35,7 @@ public class FunctionDefinitionTests
     }
 
     [Test]
-    public void FunctionDefinitionWithParameter_Transpiles_WithReferenceToParameter([ResolvedTypes] IResolvedType type)
+    public void FunctionDefinitionWithParameter_Transpiles_WithReferenceToParameter([Types] Type type)
     {
         var parameter = Program.CreateNamedParameter(type: type);
 
@@ -50,9 +50,9 @@ public class FunctionDefinitionTests
     }
 
     [Test]
-    public void FunctionDefinitionWithParameter_Throws_WithReferenceToVariableDefinedOutsideFunction([ResolvedTypes] IResolvedType type)
+    public void FunctionDefinitionWithParameter_Throws_WithReferenceToVariableDefinedOutsideFunction([Types] Type type)
     {
-        var definition = Program.FakeVariableDefinitionStatement();
+        var definition = Program.FakeVariableDefinitionStatement(type);
 
         Program.FakeFunctionDefinitionStatement(
             body: Program.CreateExpressionGeneratorStatement(
@@ -64,7 +64,7 @@ public class FunctionDefinitionTests
     }
 
     [Test]
-    public void FunctionDefinitionWithParameter_Transpiles_WithReferenceToVariableDefinedInsideFunction([ResolvedTypes] IResolvedType type)
+    public void FunctionDefinitionWithParameter_Transpiles_WithReferenceToVariableDefinedInsideFunction([Types] Type type)
     {
         var definition = Program.CreateVariableDefinitionStatement(type: type);
 

@@ -6,13 +6,12 @@ public class TypeTests
     : TokenizerTests
 {
     [Test]
-    public void ParsesBasicType(
-        [ValueSource(typeof(BasicType), nameof(BasicType.Values))] BasicType type)
+    public void ParsesBuiltInTypes([Values] BuiltinType type)
     {
-        var tokenized = Tokenize($"{type}");
+        var tokenized = Tokenize($"{type.ToString().ToLower()}");
 
         Assert.That(tokenized.Tokens, Has.Count.EqualTo(1), "Expected exactly one token.");
-        Assert.That(tokenized.Tokens, Has.Exactly(1).TypeOf<TypeToken>()
+        Assert.That(tokenized.Tokens, Has.Exactly(1).TypeOf<BuiltinTypeToken>()
                                          .With.Property("Type").EqualTo(type));
     }
 }

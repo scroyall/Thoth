@@ -24,7 +24,7 @@ public class ReturnTests
 
     [Test]
     public void ReturnWithoutValue_ThrowsException_WhenInCallWithReturnType(
-        [ResolvedTypes] IResolvedType type)
+        [Types] Type type)
     {
         Program.FakeFunctionDefinitionStatement(
             returnType: type,
@@ -36,7 +36,7 @@ public class ReturnTests
 
     [Test]
     public void ReturnWithValue_Transpiles_WhenInCallWithMatchingReturnType(
-        [ResolvedTypes] IResolvedType type)
+        [Types] Type type)
     {
         Program.FakeFunctionDefinitionStatement(
             returnType: type,
@@ -48,8 +48,8 @@ public class ReturnTests
 
     [Test]
     public void ReturnWithValue_ThrowsException_WhenInCallWithMismatchedReturnType(
-        [ResolvedTypes] IResolvedType returnType,
-        [ResolvedTypes] IResolvedType valueType)
+        [Types] Type returnType,
+        [Types] Type valueType)
     {
         if (valueType.Matches(returnType)) Assert.Ignore("Value type matches return type.");
 

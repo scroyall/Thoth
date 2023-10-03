@@ -1,8 +1,7 @@
 namespace Thoth.Parsing.Expressions;
 
 public record ListLiteralExpression(IReadOnlyList<Expression> Values)
-    : Expression(
-        Type: new ParameterizedType(BasicType.List, Values.FindMostExactType()))
+    : Expression
 {
     protected override string ArgumentsToString()
         => string.Join(", ", Values);

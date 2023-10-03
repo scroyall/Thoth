@@ -1,10 +1,8 @@
 namespace Thoth.Parsing.Expressions;
 
-public record BinaryOperationExpression(IType Type, OperatorType Operation, Expression Left, Expression Right)
-    : BinaryExpression(Type, Left, Right)
+public record BinaryOperationExpression(OperatorType Operation, Expression Left, Expression Right)
+    : BinaryExpression(Left, Right)
 {
     protected override string ArgumentsToString()
-    {
-        return $"{Left} {Operation} {Right}";
-    }
+        => $"{Left} {Operation} {Right}";
 }

@@ -4,23 +4,17 @@ public class AssignmentTests
     : TranspilerTests
 {
     [Test]
-    public void Assignment_WhenExpressionTypeMatchesVariable_Transpiles(
-        [ResolvedTypes()] IResolvedType variableType,
-        [ResolvedTypes()] IResolvedType expressionType)
+    public void Assignment_WhenExpressionTypeMatchesVariable_Transpiles([Types] Type type)
     {
-        if (!expressionType.Matches(variableType)) Assert.Ignore("Expression type does not match variable.");
+        var definition = Program.FakeVariableDefinitionStatement(type: type);
 
-        var definition = Program.FakeVariableDefinitionStatement(type: variableType);
-
-        Program.FakeAssignmentStatement(definition.Identifier, Program.CreateExpression(expressionType));
+        Program.FakeAssignmentStatement(definition.Identifier, Program.CreateExpression(type));
 
         Transpile();
     }
 
     [Test]
-    public void Assignment_WhenExpressionTypeDoesNotMatchVariable_ThrowsException(
-        [ResolvedTypes()] IResolvedType variableType,
-        [ResolvedTypes()] IResolvedType expressionType)
+    public void Assignment_WhenExpressionTypeDoesNotMatchVariable_ThrowsException([Types] Type variableType, [Types] Type expressionType)
     {
         if (expressionType.Matches(variableType)) Assert.Ignore("Expression type matches variable.");
 

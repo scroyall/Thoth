@@ -1,10 +1,8 @@
 namespace Thoth.Parsing.Expressions;
 
 public record IntegerExpression(long Value)
-    : Expression(BasicType.Integer)
+    : Expression(Thoth.Type.Integer)
 {
     protected override string ArgumentsToString()
-    {
-        return Value.ToString();
-    }
+        => Value.ToString();
 }

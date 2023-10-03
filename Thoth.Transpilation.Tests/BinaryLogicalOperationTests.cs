@@ -12,11 +12,11 @@ public class BinaryLogicalOperationTests
     {
         // TODO: Replace variable definition with a fake expression generator.
         Program.FakeVariableDefinitionStatement(
+            Type.Boolean,
             value: new BinaryOperationExpression(
-                BasicType.Boolean,
                 operation,
-                Left: Program.CreateExpression(BasicType.Boolean),
-                Right: Program.CreateExpression(BasicType.Boolean)
+                Left: Program.CreateExpression(Type.Boolean),
+                Right: Program.CreateExpression(Type.Boolean)
             )
         );
 
@@ -26,15 +26,15 @@ public class BinaryLogicalOperationTests
     [Test]
     public void BinaryLogicalOperation_WhenOperandDoesNotMatchBoolean_ThrowsException(
         [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.BinaryLogical))] OperatorType operation,
-        [ResolvedTypes()] IResolvedType leftType,
-        [ResolvedTypes()] IResolvedType rightType)
+        [Types] Type leftType,
+        [Types] Type rightType)
     {
-        if (leftType.Matches(BasicType.Boolean) && rightType.Matches(BasicType.Boolean)) Assert.Ignore("Operands both match boolean.");
+        if (leftType.Matches(Type.Boolean) && rightType.Matches(Type.Boolean)) Assert.Ignore("Operands both match boolean.");
 
         // TODO: Replace variable definition with a fake expression generator.
         Program.FakeVariableDefinitionStatement(
+            Type.Boolean,
             value: new BinaryOperationExpression(
-                BasicType.Boolean,
                 operation,
                 Left: Program.CreateExpression(leftType),
                 Right: Program.CreateExpression(rightType)

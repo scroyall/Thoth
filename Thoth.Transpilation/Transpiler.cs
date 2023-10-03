@@ -164,7 +164,7 @@ public class Transpiler
         _calls.Pop();
 
         // Check that a return was guaranteed if the function is expected a return value.
-        if (function.ReturnType is not null && !returned) throw new MissingReturnStatementException(function.ReturnType);
+        if (function.ReturnType is { } returnType && !returned) throw new MissingReturnStatementException(returnType);
 
         WriteLabelLine(GetFunctionExitLabel(function.Name));
 
@@ -298,7 +298,7 @@ public class Transpiler
         GenerateConditionalLoop(
             generateTest: (breakLabel) =>
             {
-                TryGenerateExpression(loop.Condition).Resolve().Match(BasicType.Boolean);
+                TryGenerateExpression(loop.Condition).Match(Type.Boolean);
 
                 // Test the result of the condition expression and break out of the loop if it's zero.
                 GenerateTestZero(breakLabel);
@@ -336,7 +336,7 @@ public class Transpiler
     {
         WriteCommentLine(conditional);
 
-        TryGenerateExpression(conditional.Condition).Match(BasicType.Boolean);
+        TryGenerateExpression(conditional.Condition).Match(Type.Boolean);
 
         var label = $"{NextLabel}conditional";
         GenerateTestZero(label);
@@ -433,7 +433,7 @@ public class Transpiler
         TryGenerateExpression( enumerator.Range.Start);
 
         // Initialize the variable holding the enumerator's current value with the start value.
-        DefineLocalVariable(BasicType.Integer, enumerator.Identifier);
+        DefineLocalVariable(Type.Integer, enumerator.Identifier);
 
         GenerateConditionalLoop(
             generateTest: (breakLabel) =>
@@ -463,7 +463,7 @@ public class Transpiler
     {
         WriteCommentLine(assert);
 
-        TryGenerateExpression(assert.Condition).Match(BasicType.Boolean);
+        TryGenerateExpression(assert.Condition).Match(Type.Boolean);
 
         var label = $"{NextLabel}_assert_pass";
 
@@ -496,7 +496,7 @@ public class Transpiler
                 // Generate the expression to be printed and ensure the type is resolved.
                 var type = TryGenerateExpression(expression);
 
-                if (type.Matches(BasicType.Integer)) return GeneratePrintSignedInteger();
+                if (type.Matches(Type.Integer)) return GeneratePrintSignedInteger();
 
                 throw new NotImplementedException();
         }
@@ -589,10 +589,10 @@ public class Transpiler
 
     #region Expressions
 
-    protected virtual IResolvedType TryGenerateExpression(Expression expression)
+    protected virtual Type TryGenerateExpression(Expression expression)
         => GenerateExpression(expression as dynamic);
 
-    protected IResolvedType GenerateExpression(Expression expression)
+    protected Type GenerateExpression(Expression expression)
     {
         // Catch any expressions which don't match an overload.
         throw new UnexpectedExpressionException(expression);
@@ -601,7 +601,7 @@ public class Transpiler
     /// <remarks>
     /// Push an integer value on to the stack.
     /// </remarks>
-    protected IResolvedType GenerateExpression(IntegerExpression integer)
+    protected Type GenerateExpression(IntegerExpression integer)
     {
         WriteCommentLine($"integer literal ({integer.Value})");
 
@@ -617,17 +617,17 @@ public class Transpiler
             GeneratePush("rax");
         }
 
-        return BasicType.Integer;
+        return Type.Integer;
     }
 
-    protected IResolvedType GenerateExpression(FunctionCallExpression call)
+    protected Type GenerateExpression(FunctionCallExpression call)
     {
         WriteCommentLine(call);
 
         return GenerateFunctionCall(call) ?? throw new InvalidFunctionException($"Function '{call.Name}' must return a value when used as an expression.");
     }
 
-    protected IResolvedType? GenerateFunctionCall(IFunctionCall call)
+    protected Type? GenerateFunctionCall(IFunctionCall call)
     {
         // Check that the function has been defined.
         if (!IsFunctionDefined(call.Name)) throw new UndefinedFunctionException(call.Name);
@@ -665,19 +665,19 @@ public class Transpiler
         return definition.ReturnType;
     }
 
-    protected IResolvedType GenerateExpression(BooleanLiteralExpression boolean)
+    protected Type GenerateExpression(BooleanLiteralExpression boolean)
     {
         WriteCommentLine($"boolean literal ({boolean.Value})");
 
         GeneratePush(boolean.Value ? "1" : "0");
 
-        return BasicType.Boolean;
+        return Type.Boolean;
     }
 
     /// <remarks>
     /// Push a copy of a variable's value on to the stack.
     /// </remarks>
-    protected IResolvedType GenerateExpression(VariableExpression variable)
+    protected Type GenerateExpression(VariableExpression variable)
     {
         WriteCommentLine(variable);
 
@@ -692,7 +692,7 @@ public class Transpiler
     /// Generate the left and right hand sides of a binary expression, perform an operation, and push the result on to
     /// the stack.
     /// </remarks>
-    protected IResolvedType GenerateExpression(BinaryOperationExpression expression)
+    protected Type GenerateExpression(BinaryOperationExpression expression)
     {
         WriteCommentLine(expression);
 
@@ -709,7 +709,7 @@ public class Transpiler
         if (operation.IsComparisonOperation()) return GenerateComparisonOperation(operation);
         if (operation.IsLogicalOperation())
         {
-            expressionType.Match(BasicType.Boolean);
+            expressionType.Match(Type.Boolean);
 
             return GenerateLogicalBinaryOperation(operation);
         }
@@ -717,7 +717,7 @@ public class Transpiler
         throw new UnexpectedExpressionException(expression);
     }
 
-    protected IResolvedType GenerateMathematicalBinaryOperation(OperatorType operation)
+    protected Type GenerateMathematicalBinaryOperation(OperatorType operation)
     {
         switch (operation)
         {
@@ -745,10 +745,10 @@ public class Transpiler
                 throw new InvalidOperationException(operation, message: $"Expected mathematical operation not {operation}.");
         }
 
-        return BasicType.Integer;
+        return Type.Integer;
     }
 
-    protected IResolvedType GenerateComparisonOperation(OperatorType operation)
+    protected Type GenerateComparisonOperation(OperatorType operation)
     {
         WriteCommentLine(operation.ToSourceString());
 
@@ -765,17 +765,17 @@ public class Transpiler
         };
     }
 
-    protected IResolvedType GenerateComparisonOperation(string comparison)
+    protected Type GenerateComparisonOperation(string comparison)
     {
         WriteLine($"xor rcx, rcx"); // Zero out the result register.
         WriteLine($"cmp rax, rbx"); // Compare the two value registers.
         WriteLine($"set{comparison} cl"); // Set the result register to 1 if the comparison is true.
         GeneratePush("rcx"); // Push the result on to the stack.
 
-        return BasicType.Boolean;
+        return Type.Boolean;
     }
 
-    protected IResolvedType GenerateLogicalBinaryOperation(OperatorType operation)
+    protected Type GenerateLogicalBinaryOperation(OperatorType operation)
     {
         switch (operation)
         {
@@ -793,31 +793,31 @@ public class Transpiler
                 throw new InvalidOperationException(operation, message: $"Expected logical operation not {operation}.");
         }
 
-        return BasicType.Boolean;
+        return Type.Boolean;
     }
 
-    protected IResolvedType GenerateExpression(UnaryOperationExpression expression)
+    protected Type GenerateExpression(UnaryOperationExpression expression)
     {
         WriteCommentLine(expression);
 
         // Generate the sub-expression, pushing its result onto the stack.
-        TryGenerateExpression(expression.Value).Match(expression.Type);
+        var type = TryGenerateExpression(expression.Value);
 
         // Pop the sub-expression value from the top of the stack.
         GeneratePop("rax");
 
         return expression.Operation switch
         {
-            OperatorType.Not => GenerateNotOperation(expression),
+            OperatorType.Not => GenerateNotOperation(type),
 
             _ => throw new InvalidOperationException(expression.Operation)
         };
     }
 
-    protected IResolvedType GenerateNotOperation(UnaryOperationExpression expression)
+    protected Type GenerateNotOperation(Type type)
     {
         // The not operation can only be applied to boolean expressions.
-        expression.Type.Match(BasicType.Boolean);
+        type.Match(Type.Boolean);
 
         WriteCommentLine("not");
 
@@ -828,7 +828,7 @@ public class Transpiler
         GeneratePush("rax");
 
         // The not operation always 
-        return BasicType.Boolean;
+        return Type.Boolean;
     }
 
     #endregion
@@ -922,7 +922,7 @@ public class Transpiler
     /// </summary>
     /// <param name="identifier">Unique identifier for the variable.</param>
     /// <exception cref="MultiplyDefinedVariableException">If the variable is already defined.</exception>
-    private void DefineLocalVariable(IResolvedType type, string identifier)
+    private void DefineLocalVariable(Type type, string identifier)
     {
         if (IsDefined(identifier)) throw new MultiplyDefinedVariableException(identifier);
 
@@ -933,7 +933,7 @@ public class Transpiler
         _definitions[identifier] = new(VariableScope.Local, type, _stackSize);
     }
 
-    private void DefineParameter(IResolvedType type, string identifier, int offset)
+    private void DefineParameter(Type type, string identifier, int offset)
     {
         if (IsDefined(identifier)) throw new MultiplyDefinedFunctionException(identifier);
 

@@ -119,10 +119,10 @@ public class Tokenizer
             return new KeywordToken(keyword, SourceReference.OffsetBy(buffer.Length));
         }
 
-        // Check for basic types.
-        if (BasicType.TryParse(word) is { } type)
+        // Check for built-in types.
+        if (Enum.TryParse<BuiltinType>(word, true, out var builtin))
         {
-            return new TypeToken(type, SourceReference.OffsetBy(buffer.Length));
+            return new BuiltinTypeToken(builtin, SourceReference.OffsetBy(buffer.Length));
         }
 
         // Everything that's not a keyword must be an identifier.

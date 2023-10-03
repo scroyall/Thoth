@@ -53,7 +53,7 @@ public class Parser
             KeywordToken keyword => ParseKeyword(keyword),
             SymbolToken symbol   => ParseSymbol(symbol),
             IdentifierToken      => ParseIdentifier(),
-            TypeToken            => ParseVariableDefinition(),
+            BuiltinTypeToken            => ParseVariableDefinition(),
             { } token => throw new UnexpectedTokenException(token),
             null => throw new UnexpectedEndOfInputException()
         };
@@ -202,7 +202,6 @@ public class Parser
         ConsumeSymbol(SymbolType.Equals);
 
         var expression = ParseExpression();
-        type = expression.Type.Match(type);
 
         ConsumeSymbol(SymbolType.Semicolon);
 
@@ -220,12 +219,12 @@ public class Parser
 
         ConsumeSymbol(SymbolType.RightParenthesis);
 
-        IResolvedType? type = null;
+        Type? type = null;
         if (TryConsumeSymbol(SymbolType.Minus))
         {
             ConsumeSymbol(SymbolType.RightChevron);
 
-            type = ParseType(out _).Resolve();
+            type = ParseType(out _);
         }
 
         var body = ParseStatement();
@@ -237,7 +236,7 @@ public class Parser
     private IEnumerable<NamedParameter> ParseNamedParameters()
     {
         // Next token must be a type to parse any named parameters.
-        if (Tokens.Peek() is not TypeToken) yield break;
+        if (Tokens.Peek() is not BuiltinTypeToken) yield break;
 
         // Keep parsing named parameters for as long as possible.
         while (true)
@@ -251,29 +250,26 @@ public class Parser
 
     private NamedParameter ParseNamedParameter()
     {
-        var type = ConsumeToken<TypeToken>().Type.Resolve();
+        var type = ParseType(out _);
         var name = ConsumeToken<IdentifierToken>().Name;
 
         return new(type, name);
     }
 
-    private IType ParseType(out SourceReference source)
+    private Type ParseType(out SourceReference source)
     {
-        var outer = ConsumeToken<TypeToken>();
+        var outer = ConsumeToken<BuiltinTypeToken>();
         source = outer.Source;
 
-        var type = outer.Type;
-
+        Type[] parameters = [];
         if (TryConsumeSymbol(SymbolType.LeftChevron))
         {
-            var parameter = ParseType(out _);
-
-            type = new ParameterizedType(type.Resolve(), parameter);
+            parameters = [ParseType(out _)];
 
             ConsumeSymbol(SymbolType.RightChevron);
         }
 
-        return type;
+        return new(outer.Type, parameters);
     }
 
     private ConditionalStatement ParseConditional()
@@ -379,7 +375,7 @@ public class Parser
                 ConsumeSymbol(SymbolType.RightParenthesis);
                 break;
             case SymbolToken { Type: SymbolType.Exclamation }: // Not Operation
-                left = new UnaryOperationExpression(BasicType.Boolean, OperatorType.Not, ParseExpression());
+                left = new UnaryOperationExpression(OperatorType.Not, ParseExpression());
                 break;
             case SymbolToken { Type: SymbolType.LeftSquareBracket }: // List
                 left = new ListLiteralExpression(ParseExpressionsUntil(SymbolType.RightSquareBracket).ToList());
@@ -401,16 +397,7 @@ public class Parser
             // Parse the expression for the right hand side.
             var right = ParseExpression(operatorPrecedence);
 
-            // Get the type of the expression by matching the right side type to the left side.
-            var type = right.Type.Match(left.Type);
-
-            if (operation.IsLogicalOperation())
-            {
-                // Logical operations are always of boolean type.
-                type = type.Match(BasicType.Boolean);
-            }
-
-            left = new BinaryOperationExpression(type, operation, left, right);
+            left = new BinaryOperationExpression(operation, left, right);
         }
 
         // Not a binary expression.
@@ -595,7 +582,7 @@ public class Parser
         }
     }
 
-    private int DefineFunction(string name, IReadOnlyList<NamedParameter> parameters, IResolvedType? returnType, Statement body, SourceReference source)
+    private int DefineFunction(string name, IReadOnlyList<NamedParameter> parameters, Type? returnType, Statement body, SourceReference source)
     {
         if (Functions.ContainsKey(name)) throw new MultiplyDefinedFunctionException(name);
 

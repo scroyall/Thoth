@@ -2,6 +2,6 @@
 
 # Comments can contain keywords and symbols like exit, if, +, -, and ;.
 
-var x = 1; # Comments can come after other code without affecting it.
+int x = 1; # Comments can come after other code without affecting it.
 
-# var x = 1; # Comments which look like code are still just comments.
+# int x = 1; # Comments which look like code are still just comments.

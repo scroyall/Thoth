@@ -4,7 +4,7 @@ public class VariableDefinitionTests
     : TranspilerTests
 {
     [Test]
-    public void DefinitionStatement_Transpiles_WhenExpressionTypeEqualsVariableType([Values] BasicType type)
+    public void DefinitionStatement_Transpiles_WhenExpressionTypeEqualsVariableType([Values] Type type)
     {
         Program.FakeVariableDefinitionStatement(type);
 
@@ -12,17 +12,9 @@ public class VariableDefinitionTests
     }
 
     [Test]
-    public void DefinitionStatement_Transpiles_WhenVariableTypeIsUnresolved([Values] BasicType expressionType)
-    {
-        Program.FakeVariableDefinitionStatement(value: Program.CreateExpression(expressionType));
-        
-        Transpile();
-    }
-
-    [Test]
     public void DefinitionStatement_ThrowsMismatchedTypeException_WhenExpressionTypeDoesNotMatchVariableType(
-        [Values] IType variableType,
-        [Values] IType expressionType)
+        [Values] Type variableType,
+        [Values] Type expressionType)
     {
         if (expressionType.Matches(variableType)) Assert.Ignore("Expression type matches variable type.");
 

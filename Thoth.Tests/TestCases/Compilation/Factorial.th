@@ -1,7 +1,7 @@
-var n = 10;
+int n = 10;
 
 # 0! = 1
-var result = 1;
+int result = 1;
 
 while (n > 0)
 {

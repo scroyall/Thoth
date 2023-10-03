@@ -11,7 +11,7 @@ public class MissingStatementException<TStatement>(string? message = null)
     : Exception(message ?? $"Missing {typeof(TStatement).Name} statement.")
     where TStatement : Statement;
 
-public class MissingReturnStatementException(IResolvedType type)
+public class MissingReturnStatementException(Type? type)
     : MissingStatementException<ReturnStatement>(
         type is null ? "Missing return statement." : $"Missing return statement of type {type}.");
 
@@ -21,7 +21,7 @@ public class UnexpectedExpressionException(Expression expression)
     public readonly Expression Expression = expression;
 }
 
-public class MissingExpressionException(IType type)
+public class MissingExpressionException(Type type)
     : Exception($"Missing expression of type {type}.");
 
 public class UndefinedVariableException(string identifier)

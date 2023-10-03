@@ -1,6 +1,6 @@
 using Thoth.Parsing.Expressions;
 using Thoth.Parsing.Statements;
-using Thoth.Tests;
+using Thoth.Tokenization;
 
 namespace Thoth.Parsing.Tests;
 
@@ -13,11 +13,20 @@ public class PrecedenceTests
         [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.Comparison  ))] OperatorType comparison,
         [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.Mathematical))] OperatorType mathematical)
     {
-        var program = Parse($"var value = 0 {comparison.ToSourceString()} 0 {mathematical.ToSourceString()} 0;");
+        Program.IdentifierToken();
+        Program.SymbolToken(SymbolType.Equals);
+        Program.IdentifierToken();
+        Program.OperatorTokens(comparison);
+        Program.IdentifierToken();
+        Program.OperatorTokens(mathematical);
+        Program.IdentifierToken();
+        Program.SymbolToken(SymbolType.Semicolon);
 
-        Assert.That(program.Statements, Has.Exactly(1).TypeOf<VariableDefinitionStatement>()
-                                           .And.Property("Value")
-                                           .Matches<BinaryOperationExpression>(e => e.Operation == comparison));
+        var parsed = Parse();
+
+        Assert.That(parsed.Statements, Has.Exactly(1).TypeOf<AssignmentStatement>()
+                                          .And.Property("Value")
+                                          .Matches<BinaryOperationExpression>(e => e.Operation == comparison));
     }
 
     [Test]
@@ -25,9 +34,18 @@ public class PrecedenceTests
         [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.Comparison  ))] OperatorType comparison,
         [ValueSource(typeof(OperatorValueSources), nameof(OperatorValueSources.Mathematical))] OperatorType mathematical)
     {
-        var program = Parse($"var value = 0 {mathematical.ToSourceString()} 0 {comparison.ToSourceString()} 0;");
+        Program.IdentifierToken();
+        Program.SymbolToken(SymbolType.Equals);
+        Program.IdentifierToken();
+        Program.OperatorTokens(mathematical);
+        Program.IdentifierToken();
+        Program.OperatorTokens(comparison);
+        Program.IdentifierToken();
+        Program.SymbolToken(SymbolType.Semicolon);
 
-        Assert.That(program.Statements, Has.Exactly(1).TypeOf<VariableDefinitionStatement>()
+        var parsed = Parse();
+
+        Assert.That(parsed.Statements, Has.Exactly(1).TypeOf<AssignmentStatement>()
                                            .And.Property("Value")
                                            .Matches<BinaryOperationExpression>(e => e.Operation == comparison));
     }

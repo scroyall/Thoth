@@ -10,17 +10,15 @@ public class FunctionCallTests
     [Test]
     public void FunctionCall_WithoutParameters_ParsesAsStatement()
     {
-        var name = Fakes.IdentifierName;
+        var name = Program.IdentifierToken().Name;
+        Program.SymbolToken(SymbolType.LeftParenthesis);
+        Program.SymbolToken(SymbolType.RightParenthesis);
+        Program.SymbolToken(SymbolType.Semicolon);
 
-        var program = Parse(
-            Fakes.Identifier(name),
-            Fakes.Symbol(SymbolType.LeftParenthesis),
-            Fakes.Symbol(SymbolType.RightParenthesis),
-            Fakes.Symbol(SymbolType.Semicolon)
-        );
+        var parsed = Parse();
 
-        Assert.That(program.Statements, Has.Count.EqualTo(1).And.One.TypeOf<FunctionCallStatement>());
-        var call = program.Statements[0] as FunctionCallStatement ?? throw new NullReferenceException();
+        Assert.That(parsed.Statements, Has.Count.EqualTo(1).And.One.TypeOf<FunctionCallStatement>());
+        var call = parsed.Statements[0] as FunctionCallStatement ?? throw new NullReferenceException();
 
         Assert.Multiple(() =>
         {
@@ -32,25 +30,20 @@ public class FunctionCallTests
     [Test]
     public void FunctionCall_WithoutParameters_ParsesAsExpression()
     {
-        var name = Fakes.IdentifierName;
+        Program.IdentifierToken();
+        Program.SymbolToken(SymbolType.Equals);
+        var name = Program.IdentifierToken().Name;
+        Program.SymbolToken(SymbolType.LeftParenthesis);
+        Program.SymbolToken(SymbolType.RightParenthesis);
+        Program.SymbolToken(SymbolType.Semicolon);
 
-        var program = Parse(
-            Fakes.Keyword(KeywordType.Print),
-            Fakes.Symbol(SymbolType.LeftParenthesis),
+        var parsed = Parse();
 
-            Fakes.Identifier(name),
-            Fakes.Symbol(SymbolType.LeftParenthesis),
-            Fakes.Symbol(SymbolType.RightParenthesis),
+        Assert.That(parsed.Statements, Has.Count.EqualTo(1).And.One.TypeOf<AssignmentStatement>());
+        var assignment = parsed.Statements[0] as AssignmentStatement ?? throw new NullReferenceException();
 
-            Fakes.Symbol(SymbolType.RightParenthesis),
-            Fakes.Symbol(SymbolType.Semicolon)
-        );
-
-        Assert.That(program.Statements, Has.Count.EqualTo(1).And.One.TypeOf<PrintStatement>());
-        var print = program.Statements[0] as PrintStatement ?? throw new NullReferenceException();
-
-        Assert.That(print.Value, Is.TypeOf<FunctionCallExpression>());
-        var call = print.Value as FunctionCallExpression ?? throw new NullReferenceException();
+        Assert.That(assignment.Value, Is.TypeOf<FunctionCallExpression>());
+        var call = assignment.Value as FunctionCallExpression ?? throw new NullReferenceException();
 
         Assert.Multiple(() =>
         {
@@ -63,26 +56,23 @@ public class FunctionCallTests
     [Test]
     public void FunctionCall_WithSingleParameter_ParsesAsStatement()
     {
-        var variableName = Fakes.IdentifierName;
+        var functionName = Program.IdentifierToken().Name;
+        Program.SymbolToken(SymbolType.LeftParenthesis);
+        var parameterName = Program.IdentifierToken().Name;
+        Program.SymbolToken(SymbolType.RightParenthesis);
+        Program.SymbolToken(SymbolType.Semicolon);
 
-        var name = Fakes.IdentifierName;
-        var program = Parse(
-            Fakes.Identifier(name),
-            Fakes.Symbol(SymbolType.LeftParenthesis),
-            Fakes.Identifier(variableName),
-            Fakes.Symbol(SymbolType.RightParenthesis),
-            Fakes.Symbol(SymbolType.Semicolon)
-        );
+        var parsed = Parse();
 
-        Assert.That(program.Statements, Has.Count.EqualTo(1).And.One.TypeOf<FunctionCallStatement>());
-        var call = program.Statements[0] as FunctionCallStatement ?? throw new NullReferenceException();
+        Assert.That(parsed.Statements, Has.Count.EqualTo(1).And.One.TypeOf<FunctionCallStatement>());
+        var call = parsed.Statements[0] as FunctionCallStatement ?? throw new NullReferenceException();
 
         Assert.Multiple(() =>
         {
-            Assert.That(call.Name, Is.EqualTo(name));
+            Assert.That(call.Name, Is.EqualTo(functionName));
             Assert.That(call.Parameters, Is.EquivalentTo(new[]
             {
-                new VariableExpression(variableName)
+                new VariableExpression(parameterName)
             }));
         });
     }
@@ -90,34 +80,29 @@ public class FunctionCallTests
     [Test]
     public void FunctionCall_WithSingleParameter_ParsesAsExpression()
     {
-        var variableName = Fakes.IdentifierName;
 
-        var name = Fakes.IdentifierName;
-        var program = Parse(
-            Fakes.Keyword(KeywordType.Print),
-            Fakes.Symbol(SymbolType.LeftParenthesis),
+        Program.IdentifierToken();
+        Program.SymbolToken(SymbolType.Equals);
+        var functionName = Program.IdentifierToken().Name;
+        Program.SymbolToken(SymbolType.LeftParenthesis);
+        var parameterName = Program.IdentifierToken().Name;
+        Program.SymbolToken(SymbolType.RightParenthesis);
+        Program.SymbolToken(SymbolType.Semicolon);
 
-            Fakes.Identifier(name),
-            Fakes.Symbol(SymbolType.LeftParenthesis),
-            Fakes.Identifier(variableName),
-            Fakes.Symbol(SymbolType.RightParenthesis),
+        var parsed = Parse();
 
-            Fakes.Symbol(SymbolType.RightParenthesis),
-            Fakes.Symbol(SymbolType.Semicolon)
-        );
+        Assert.That(parsed.Statements, Has.Count.EqualTo(1).And.One.TypeOf<AssignmentStatement>());
+        var assignment = parsed.Statements[0] as AssignmentStatement ?? throw new NullReferenceException();
 
-        Assert.That(program.Statements, Has.Count.EqualTo(1).And.One.TypeOf<PrintStatement>());
-        var print = program.Statements[0] as PrintStatement ?? throw new NullReferenceException();
-
-        Assert.That(print.Value, Is.TypeOf<FunctionCallExpression>());
-        var call = print.Value as FunctionCallExpression ?? throw new NullReferenceException();
+        Assert.That(assignment.Value, Is.TypeOf<FunctionCallExpression>());
+        var call = assignment.Value as FunctionCallExpression ?? throw new NullReferenceException();
 
         Assert.Multiple(() =>
         {
-            Assert.That(call.Name, Is.EqualTo(name));
+            Assert.That(call.Name, Is.EqualTo(functionName));
             Assert.That(call.Parameters, Is.EquivalentTo(new[]
             {
-                new VariableExpression(variableName)
+                new VariableExpression(parameterName)
             }));
         });
     }
@@ -125,26 +110,22 @@ public class FunctionCallTests
     [Test]
     public void FunctionCall_WithMultipleParameters_ParsesAsStatement()
     {
-        var firstName = Fakes.IdentifierName;
-        var secondName = Fakes.IdentifierName;
+        var functionName = Program.IdentifierToken().Name;
+        Program.SymbolToken(SymbolType.LeftParenthesis);
+        var firstName = Program.IdentifierToken().Name;
+        Program.SymbolToken(SymbolType.Comma);
+        var secondName = Program.IdentifierToken().Name;
+        Program.SymbolToken(SymbolType.RightParenthesis);
+        Program.SymbolToken(SymbolType.Semicolon);
 
-        var name = Fakes.IdentifierName;
-        var program = Parse(
-            Fakes.Identifier(name),
-            Fakes.Symbol(SymbolType.LeftParenthesis),
-            Fakes.Identifier(firstName),
-            Fakes.Symbol(SymbolType.Comma),
-            Fakes.Identifier(secondName),
-            Fakes.Symbol(SymbolType.RightParenthesis),
-            Fakes.Symbol(SymbolType.Semicolon)
-        );
+        var parsed = Parse();
 
-        Assert.That(program.Statements, Has.Count.EqualTo(1).And.One.TypeOf<FunctionCallStatement>());
-        var call = program.Statements[0] as FunctionCallStatement ?? throw new NullReferenceException();
+        Assert.That(parsed.Statements, Has.Count.EqualTo(1).And.One.TypeOf<FunctionCallStatement>());
+        var call = parsed.Statements[0] as FunctionCallStatement ?? throw new NullReferenceException();
 
         Assert.Multiple(() =>
         {
-            Assert.That(call.Name, Is.EqualTo(name));
+            Assert.That(call.Name, Is.EqualTo(functionName));
             Assert.That(call.Parameters, Is.EquivalentTo(new[]
             {
                 new VariableExpression(firstName),
@@ -156,34 +137,27 @@ public class FunctionCallTests
     [Test]
     public void FunctionCall_WithMultipleParameters_ParsesAsExpression()
     {
-        var firstName = Fakes.IdentifierName;
-        var secondName = Fakes.IdentifierName;
+        Program.IdentifierToken();
+        Program.SymbolToken(SymbolType.Equals);
+        var functionName = Program.IdentifierToken().Name;
+        Program.SymbolToken(SymbolType.LeftParenthesis);
+        var firstName = Program.IdentifierToken().Name;
+        Program.SymbolToken(SymbolType.Comma);
+        var secondName = Program.IdentifierToken().Name;
+        Program.SymbolToken(SymbolType.RightParenthesis);
+        Program.SymbolToken(SymbolType.Semicolon);
 
-        var name = Fakes.IdentifierName;
-        var program = Parse(
-            Fakes.Keyword(KeywordType.Print),
-            Fakes.Symbol(SymbolType.LeftParenthesis),
+        var parsed = Parse();
 
-            Fakes.Identifier(name),
-            Fakes.Symbol(SymbolType.LeftParenthesis),
-            Fakes.Identifier(firstName),
-            Fakes.Symbol(SymbolType.Comma),
-            Fakes.Identifier(secondName),
-            Fakes.Symbol(SymbolType.RightParenthesis),
+        Assert.That(parsed.Statements, Has.Count.EqualTo(1).And.One.TypeOf<AssignmentStatement>());
+        var assignment = parsed.Statements[0] as AssignmentStatement ?? throw new NullReferenceException();
 
-            Fakes.Symbol(SymbolType.RightParenthesis),
-            Fakes.Symbol(SymbolType.Semicolon)
-        );
-
-        Assert.That(program.Statements, Has.Count.EqualTo(1).And.One.TypeOf<PrintStatement>());
-        var print = program.Statements[0] as PrintStatement ?? throw new NullReferenceException();
-
-        Assert.That(print.Value, Is.TypeOf<FunctionCallExpression>());
-        var call = print.Value as FunctionCallExpression ?? throw new NullReferenceException();
+        Assert.That(assignment.Value, Is.TypeOf<FunctionCallExpression>());
+        var call = assignment.Value as FunctionCallExpression ?? throw new NullReferenceException();
 
         Assert.Multiple(() =>
         {
-            Assert.That(call.Name, Is.EqualTo(name));
+            Assert.That(call.Name, Is.EqualTo(functionName));
             Assert.That(call.Parameters, Is.EquivalentTo(new[]
             {
                 new VariableExpression(firstName),

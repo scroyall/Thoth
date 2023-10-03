@@ -1,3 +1,3 @@
 namespace Thoth.Parsing;
 
-public record NamedParameter(IResolvedType Type, string Name);
+public record NamedParameter(Type Type, string Name);

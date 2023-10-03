@@ -6,7 +6,7 @@ public class PrintTests
     [Test]
     public void Print_DoesNotThrow_WithInteger()
     {
-        Program.FakePrintStatement(value: Program.CreateExpression(BasicType.Integer));
+        Program.FakePrintStatement(value: Program.CreateExpression(Type.Integer));
 
         Transpile();
     }

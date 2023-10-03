@@ -6,7 +6,8 @@ namespace Thoth.Parsing;
 public record DefinedFunction(
     string Name,
     IReadOnlyList<NamedParameter> Parameters,
-    IResolvedType? ReturnType,
+    // TODO Validate that the type is resolved.
+    Type? ReturnType,
     Statement Body,
     SourceReference Source
 );

@@ -1,10 +1,8 @@
 namespace Thoth.Parsing.Expressions;
 
 public record VariableExpression(string Identifier)
-    : Expression(BasicType.Unresolved)
+    : Expression
 {
     protected override string ArgumentsToString()
-    {
-        return Identifier;
-    }
+        => Identifier;
 }

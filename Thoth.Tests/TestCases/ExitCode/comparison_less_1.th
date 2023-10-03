@@ -1,5 +1,5 @@
-var larger = 5;
-var smaller = 3;
+int larger = 5;
+int smaller = 3;
 if (smaller < larger)
 {
     exit(1);
