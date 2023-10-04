@@ -377,14 +377,23 @@ public class Parser
             case SymbolToken { Type: SymbolType.Exclamation }: // Not Operation
                 left = new UnaryOperationExpression(OperatorType.Not, ParseExpression());
                 break;
-            case SymbolToken { Type: SymbolType.LeftSquareBracket }: // List
-                left = new ListLiteralExpression(ParseExpressionsUntil(SymbolType.RightSquareBracket).ToList());
-                ConsumeSymbol(SymbolType.RightSquareBracket);
+            case BuiltinTypeToken { Type: BuiltinType.List } token:
+                left = ParseListLiteralExpression(token);
                 break;
             case { } token:
                 throw new UnexpectedTokenException(token);
             default:
                 throw new UnexpectedEndOfInputException();
+        }
+
+        // Check for an index expression.
+        while (TryConsumeSymbol(SymbolType.LeftSquareBracket))
+        {
+            var index = ParseExpression();
+
+            ConsumeSymbol(SymbolType.RightSquareBracket);
+
+            left = new IndexExpression(left, index);
         }
 
         // Check for a binary expression.
@@ -402,6 +411,24 @@ public class Parser
 
         // Not a binary expression.
         return left;
+    }
+
+    private ListLiteralExpression ParseListLiteralExpression(BuiltinTypeToken token)
+    {
+        if (token.Type != BuiltinType.List) throw new UnexpectedTokenException(token);
+
+        ConsumeSymbol(SymbolType.LeftChevron);
+
+        var memberType = ParseType(out _);
+
+        ConsumeSymbol(SymbolType.RightChevron);
+        ConsumeSymbol(SymbolType.LeftSquareBracket);
+
+        var members = ParseExpressionsUntil(SymbolType.RightSquareBracket).ToList();
+
+        ConsumeSymbol(SymbolType.RightSquareBracket);
+
+        return new(memberType, members);
     }
 
     private FunctionCallExpression ParseFunctionCallExpression(IdentifierToken identifier)

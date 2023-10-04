@@ -2,16 +2,19 @@ namespace Thoth.Tests;
 
 public class TypeValueSources
 {
-    public static IEnumerable<Type> All
+    public static IEnumerable<Type> Builtin
         => [
             Type.Integer,
             Type.Boolean,
-            Type.String,
-            Type.List(Type.Integer),
-            Type.List(Type.Boolean),
-            Type.List(Type.String),
-            Type.List(Type.List(Type.Integer)),
-            Type.List(Type.List(Type.Boolean)),
-            Type.List(Type.List(Type.String)),
+            Type.String
         ];
+
+    public static IEnumerable<Type> Lists
+        => Builtin.Select(t => Type.List(t));
+
+    public static IEnumerable<Type> All
+        => Enumerable.Concat(
+            Builtin,
+            Lists
+        );
 }

@@ -162,5 +162,14 @@ public class FakeParsedProgram
     public VariableExpression CreateVariableExpression(string? identifier = null)
         => new(identifier ?? $"variable{++NameCount}");
 
+    public IntegerExpression CreateIntegerLiteralExpression(long value = 0)
+        => new(value);
+
+    public ListLiteralExpression CreateListLiteralExpression(Type memberType, int count = 3)
+        => new(memberType, Enumerable.Repeat(CreateExpression(memberType), count).ToList<Expression>());
+
+    public IndexExpression CreateIndexExpression(Expression indexable, Expression? index = null)
+        => new(indexable, index ?? CreateExpression(Type.Integer));
+
 #endregion
 }

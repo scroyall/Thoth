@@ -1,18 +1,22 @@
-using System.Data;
 using Thoth.Parsing.Expressions;
 using Thoth.Parsing.Statements;
 using Thoth.Tokenization;
 
 namespace Thoth.Parsing.Tests;
 
-public class ListTests
+public class ListLiteralTests
     : ParserTests
 {
     [Test]
-    public void List_WithNoExpressions_HasNoMembers()
+    public void ListLiteral_WithNoExpressions_HasNoMembers([Types] Type memberType)
     {
-        Program.IdentifierToken();
+        // l = list<MEMBER_TYPE>[];
+        Program.IdentifierToken("l");
         Program.SymbolToken(SymbolType.Equals);
+        Program.BuiltinTypeToken(BuiltinType.List);
+        Program.SymbolToken(SymbolType.LeftChevron);
+        Program.TypeTokens(memberType);
+        Program.SymbolToken(SymbolType.RightChevron);
         Program.SymbolToken(SymbolType.LeftSquareBracket);
         Program.SymbolToken(SymbolType.RightSquareBracket);
         Program.SymbolToken(SymbolType.Semicolon);
@@ -25,16 +29,25 @@ public class ListTests
         Assert.That(definition.Value, Is.TypeOf<ListLiteralExpression>());
         var list = definition.Value as ListLiteralExpression ?? throw new NullReferenceException();
 
-        Assert.That(list.Values, Is.Empty);
+        Assert.Multiple(() =>
+        {
+            Assert.That(list.Type, Is.EqualTo(Type.List(memberType)));
+            Assert.That(list.Values, Is.Empty);
+        });
     }
 
     [Test]
-    public void List_WithOneExpression_HasOneMember()
+    public void ListLiteral_WithOneExpression_HasOneMember([Types] Type memberType)
     {
-        Program.IdentifierToken();
+        // l = list<MEMBER_TYPE>[x];
+        Program.IdentifierToken("l");
         Program.SymbolToken(SymbolType.Equals);
+        Program.BuiltinTypeToken(BuiltinType.List);
+        Program.SymbolToken(SymbolType.LeftChevron);
+        Program.TypeTokens(memberType);
+        Program.SymbolToken(SymbolType.RightChevron);
         Program.SymbolToken(SymbolType.LeftSquareBracket);
-        Program.IdentifierToken();
+        Program.IdentifierToken("x");
         Program.SymbolToken(SymbolType.RightSquareBracket);
         Program.SymbolToken(SymbolType.Semicolon);
 
@@ -46,20 +59,29 @@ public class ListTests
         Assert.That(definition.Value, Is.TypeOf<ListLiteralExpression>());
         var list = definition.Value as ListLiteralExpression ?? throw new NullReferenceException();
 
-        Assert.That(list.Values, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(list.Type, Is.EqualTo(Type.List(memberType)));
+            Assert.That(list.Values, Has.Count.EqualTo(1));
+        });
     }
 
     [Test]
-    public void List_WithMultipleExpressions_HasMultipleMembers()
+    public void ListLiteral_WithMultipleExpressions_HasMultipleMembers([Types] Type memberType)
     {
-        Program.IdentifierToken();
+        // l = list<MEMBER_TYPE>[x, y, z];
+        Program.IdentifierToken("l");
         Program.SymbolToken(SymbolType.Equals);
+        Program.BuiltinTypeToken(BuiltinType.List);
+        Program.SymbolToken(SymbolType.LeftChevron);
+        Program.TypeTokens(memberType);
+        Program.SymbolToken(SymbolType.RightChevron);
         Program.SymbolToken(SymbolType.LeftSquareBracket);
-        Program.IdentifierToken();
+        Program.IdentifierToken("x");
         Program.SymbolToken(SymbolType.Comma);
-        Program.IdentifierToken();
+        Program.IdentifierToken("y");
         Program.SymbolToken(SymbolType.Comma);
-        Program.IdentifierToken();
+        Program.IdentifierToken("z");
         Program.SymbolToken(SymbolType.RightSquareBracket);
         Program.SymbolToken(SymbolType.Semicolon);
 
@@ -71,6 +93,10 @@ public class ListTests
         Assert.That(definition.Value, Is.TypeOf<ListLiteralExpression>());
         var list = definition.Value as ListLiteralExpression ?? throw new NullReferenceException();
 
-        Assert.That(list.Values, Has.Count.EqualTo(3));
+        Assert.Multiple(() =>
+        {
+            Assert.That(list.Type, Is.EqualTo(Type.List(memberType)));
+            Assert.That(list.Values, Has.Count.EqualTo(3));
+        });
     }
 }

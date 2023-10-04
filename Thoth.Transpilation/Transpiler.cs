@@ -76,6 +76,9 @@ public class Transpiler
         WriteLine();
         GenerateMacros();
 
+        WriteLine();
+        ReserveHeap();
+
         Outdent();
         WriteLine();
     }
@@ -95,6 +98,12 @@ public class Transpiler
         WriteLine("%define SYSCALL_WRITE 1");
         WriteLine("%define SYSCALL_EXIT 60");
         WriteLine("%define STDOUT 1");
+    }
+
+    private void ReserveHeap()
+    {
+        WriteLine("heap_start: times 1024 dq 0");
+        WriteLine("heap_size_bytes: dq 0");
     }
 
     private void GenerateTextSection()
@@ -831,6 +840,69 @@ public class Transpiler
         return Type.Boolean;
     }
 
+    protected Type GenerateExpression(ListLiteralExpression list)
+    {
+        WriteCommentLine(list);
+
+        // Allocate heap memory for the list length and any values.
+        // Destination register RDI now holds the starting address of the allocated memory.
+        GenerateAllocation((list.Values.Count + 1) * 8);
+
+        // Push the starting address of the allocated memory on to the stack as the generated value.
+        GeneratePush("rdi");
+
+        // Write the length of the list to the first word.
+        WriteLine($"mov QWORD [rdi], {list.Values.Count}");
+
+        var memberType = list.MemberType;
+        foreach (var value in list.Values)
+        {
+            // Advance the destination register to the memory allocated for the next value in the list.
+            WriteLine("add rdi, 8");
+
+            // Save the destination register in case generating the value expression overwrites it.
+            // This occurs if the value is itself a list literal.
+            GeneratePush("rdi");
+
+            // Generate the value expression and check the type matches the member type of the list.
+            memberType = TryGenerateExpression(value).Match(memberType);
+
+            // Pop the generate value off the stack in a temporary register.
+            GeneratePop("rax");
+
+            // Restore the previously saved destination register.
+            GeneratePop("rdi");
+
+            // Move the generated value out of the temporary register into the heap memory allocated to it.
+            WriteLine("mov QWORD [rdi], rax");
+        }
+
+        return Type.List(memberType);
+    }
+
+    protected Type GenerateExpression(IndexExpression index)
+    {
+        WriteCommentLine(index);
+
+        // Generate the expression for the indexable, which is the location of the start of the list in memory.
+        var indexableType = TryGenerateExpression(index.Indexable);
+        if (indexableType.Root != BuiltinType.List) throw new MismatchedTypeException(BuiltinType.List, indexableType);
+
+        // Generate the expression for the index, and check it's an integer.
+        TryGenerateExpression(index.Index).Match(Type.Integer);
+
+        // Pop the index into the data register.
+        GeneratePop("rdx");
+
+        // Pop the memory location of the list off the stack into the source register.
+        GeneratePop("rsi");
+
+        // Push the value from the memory location within the list on to the stack for the expression result.
+        GeneratePush("QWORD [rsi + (rdx + 1) * 8]");
+
+        return indexableType.Parameters[0];
+    }
+
     #endregion
 
     #region Scopes
@@ -1128,6 +1200,20 @@ public class Transpiler
 
     private bool IsFunctionDefined(string name)
         => Program.Functions.ContainsKey(name);
+
+#endregion
+
+#region Heap
+
+    private void GenerateAllocation(int bytes)
+    {
+        WriteCommentLine($"allocate {bytes} bytes");
+
+        WriteLine("mov QWORD rdi, [heap_size_bytes]");
+        WriteLine("add rdi, heap_start");
+
+        WriteLine($"add QWORD [heap_size_bytes], {bytes}");
+    }
 
 #endregion
 }

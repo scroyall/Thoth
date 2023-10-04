@@ -78,7 +78,7 @@ public class TokenizedProgramFaker
         switch (type.Root)
         {
             case BuiltinType.Int:
-                Tokens.Add(new IntegerLiteralToken(0, CreateSourceReference()));
+                IntegerLiteralToken();
                 break;
             case BuiltinType.Bool:
                 Tokens.Add(new BooleanLiteralToken(false, CreateSourceReference()));
@@ -92,15 +92,24 @@ public class TokenizedProgramFaker
         }
     }
 
-    public void ListLiteralTokens(Type type)
+    public IntegerLiteralToken IntegerLiteralToken(long value = 0)
+        => AddToken(new IntegerLiteralToken(value, CreateSourceReference()));
+
+    public void ListLiteralTokens(Type memberType)
     {
+        BuiltinTypeToken(BuiltinType.List);
+
+        SymbolToken(SymbolType.LeftChevron);
+        TypeTokens(memberType);
+        SymbolToken(SymbolType.RightChevron);
+
         SymbolToken(SymbolType.LeftSquareBracket);
 
-        LiteralTokens(type);
+        LiteralTokens(memberType);
         SymbolToken(SymbolType.Comma);
-        LiteralTokens(type);
+        LiteralTokens(memberType);
         SymbolToken(SymbolType.Comma);
-        LiteralTokens(type);
+        LiteralTokens(memberType);
 
         SymbolToken(SymbolType.RightSquareBracket);
     }
