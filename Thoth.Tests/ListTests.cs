@@ -31,4 +31,24 @@ public class ListTests
 
         Assert.That(result.ExitCode, Is.EqualTo(0), "Expected exit with success.");
     }
+
+    [Test]
+    public void List_IndexesMultidimensionalArrays()
+    {
+        var result = CompileAndRunSource(@"
+            list<int> oned = list<int>[1, 2, 3];
+            list<list<int>> twod = list<list<int>>[oned, list<int>[4, 5, 6], oned];
+
+            for (x in 0..2)
+            {
+                for (y in 0..2)
+                {
+                    print(twod[x][y]);
+                }
+            }
+        ");
+
+        Assert.That(result.ExitCode, Is.EqualTo(0), "Expected exit with success.");
+        Assert.That(result.Output, Is.EqualTo("123456123"));
+    }
 }

@@ -433,22 +433,32 @@ public class Transpiler
     {
         WriteCommentLine(enumerator);
 
+        // Open a scope for the loops local and anonymous variables.
         OpenScope();
 
         // Generate the end value.
-        TryGenerateExpression( enumerator.Range.End);
+        TryGenerateExpression(enumerator.Range.End);
+
+        // Define the end value as an anonymous local variable.
+        var last = DefineAnonymousLocalVariable(Type.Integer);
 
         // Generate the start value.
-        TryGenerateExpression( enumerator.Range.Start);
+        TryGenerateExpression(enumerator.Range.Start);
 
-        // Initialize the variable holding the enumerator's current value with the start value.
-        DefineLocalVariable(Type.Integer, enumerator.Identifier);
+        // Define the current value as a local variable.
+        var current = DefineLocalVariable(Type.Integer, enumerator.Identifier);
 
         GenerateConditionalLoop(
             generateTest: (breakLabel) =>
             {
-                // Test if the current value is greater than the end value, and break out of the loop if it is.
-                GenerateTestGreater(breakLabel, preserve: true);
+                WriteCommentLine("test iterator");
+
+                // Compare the current value to the last value.
+                WriteLine($"mov QWORD rcx, [{GetVariableLocation(current)}]");
+                WriteLine($"cmp QWORD rcx, [{GetVariableLocation(last)}]");
+
+                // Break out of the loop if the current value is above the last value.
+                WriteLine($"ja {breakLabel}");
             },
             generateLoopBody: () =>
             {
@@ -456,9 +466,8 @@ public class Transpiler
                 TryGenerateStatement(enumerator.Body);
 
                 // Increment the enumerator.
-                GeneratePop("rcx");
-                WriteLine("inc rcx");
-                GeneratePush("rcx");
+                WriteCommentLine($"increment iterator");
+                WriteLine($"inc QWORD [{GetVariableLocation(current)}]");
             }
         );
 
@@ -898,6 +907,7 @@ public class Transpiler
         GeneratePop("rsi");
 
         // Push the value from the memory location within the list on to the stack for the expression result.
+        WriteCommentLine("index into list");
         GeneratePush("QWORD [rsi + (rdx + 1) * 8]");
 
         return indexableType.Parameters[0];
@@ -987,14 +997,14 @@ public class Transpiler
 
     #endregion
 
-    #region Variables
+#region Variables
 
     /// <summary>
     /// Define a variable.
     /// </summary>
     /// <param name="identifier">Unique identifier for the variable.</param>
     /// <exception cref="MultiplyDefinedVariableException">If the variable is already defined.</exception>
-    private void DefineLocalVariable(Type type, string identifier)
+    private DefinedVariable DefineLocalVariable(Type type, string identifier)
     {
         if (IsDefined(identifier)) throw new MultiplyDefinedVariableException(identifier);
 
@@ -1002,7 +1012,18 @@ public class Transpiler
         _locals.Push(identifier);
 
         // Add the position of the variable on the stack to the map of variable stack indices.
-        _definitions[identifier] = new(VariableScope.Local, type, _stackSize);
+        var definition = new DefinedVariable(VariableScope.Local, type, _stackSize);
+        _definitions[identifier] = definition;
+
+        return definition;
+    }
+
+    private DefinedVariable DefineAnonymousLocalVariable(Type type)
+    {
+        // Push an empty string on to the stack of locally defined variables.
+        _locals.Push(string.Empty);
+
+        return new(VariableScope.Local, type, _stackSize);
     }
 
     private void DefineParameter(Type type, string identifier, int offset)
@@ -1027,7 +1048,11 @@ public class Transpiler
         // Pop the top identifier off the stack of defined variables.
         var identifier = _locals.Pop();
 
-        UndefineVariable(identifier);
+        // Remove non-anonymous definitions from the map of variable definitions by identifier.
+        if (identifier != string.Empty)
+        {
+            UndefineVariable(identifier);
+        }
     }
 
     /// <summary>
@@ -1057,19 +1082,22 @@ public class Transpiler
         return _definitions[identifier];
     }
 
-    private string GetVariableLocation(DefinedVariable definition)
+    private string GetVariableLocation(VariableScope scope, int offset)
     {
-        return definition.Scope switch
+        return scope switch
         {
-            VariableScope.Local => $"rbp - {definition.Offset - 1} * 8",
-            VariableScope.Parameter => $"rbp + ({definition.Offset} + 2) * 8",
+            VariableScope.Local => $"rbp - {offset - 1} * 8",
+            VariableScope.Parameter => $"rbp + ({offset} + 2) * 8",
             _ => throw new NotImplementedException()
         };
     }
 
-    #endregion
+    private string GetVariableLocation(DefinedVariable definition)
+        => GetVariableLocation(definition.Scope, definition.Offset);
 
-    #region Labels
+#endregion
+
+#region Labels
 
     // TODO(SR 210923) Don't implement this as a property because it increments when inspected in the debugger.
     private string NextLabel => $"label{++_labels}";
@@ -1093,9 +1121,9 @@ public class Transpiler
         return label;
     }
 
-    #endregion
+#endregion
 
-    #region Tests
+#region Tests
 
     /// <summary>
     /// Generate a test that the value on the top of the stack value is zero.
@@ -1145,9 +1173,9 @@ public class Transpiler
         WriteLine($"{instruction} {label}");
     }
 
-    #endregion
+#endregion
 
-    #region Writing
+#region Writing
 
     private void WriteLine(string text = "")
     {
