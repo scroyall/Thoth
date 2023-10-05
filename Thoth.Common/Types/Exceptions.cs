@@ -8,3 +8,6 @@ public class UnresolvedTypeException()
 
 public class UndefinedTypeException(string id)
     : Exception($"Type '{id}' is not defined.");
+
+public class InvalidParameterCountException(int expected, int actual)
+    : Exception($"Parameter count mismatch; expected {expected} not {actual}.");

@@ -163,6 +163,10 @@ public class TokenizedProgramFaker
                 SymbolToken(SymbolType.VerticalBar);
                 SymbolToken(SymbolType.VerticalBar);
                 break;
+            case OperatorType.Range:
+                SymbolToken(SymbolType.Dot);
+                SymbolToken(SymbolType.Dot);
+                break;
             default:
                 throw new NotImplementedException();
         }

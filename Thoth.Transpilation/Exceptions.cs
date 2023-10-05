@@ -33,9 +33,6 @@ public class UndefinedFunctionException(string identifier)
 public class InvalidFunctionException(string Message)
     : Exception(Message);
 
-public class InvalidParameterCountException(string identifier, int count, int expected)
-    : Exception($"Invalid parameter count of {count} for '{identifier}' which expects {expected}.");
-
 public class MultiplyDefinedVariableException(string identifier)
     : Exception($"Variable '{identifier}' is already defined.");
 

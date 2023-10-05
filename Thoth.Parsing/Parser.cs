@@ -1,7 +1,5 @@
 ﻿namespace Thoth.Parsing;
 
-using System.Reflection.Metadata.Ecma335;
-using System.Text.Json;
 using Expressions;
 using Statements;
 using Tokenization;
@@ -66,7 +64,7 @@ public class Parser
             KeywordType.Exit     => ParseExit(),
             KeywordType.If       => ParseConditional(),
             KeywordType.While    => ParseWhile(),
-            KeywordType.For      => ParseFor(),
+            KeywordType.For      => ParseIterator(),
             KeywordType.Assert   => ParseAssert(),
             KeywordType.Print    => ParsePrint(),
             KeywordType.Function => ParseFunctionDefinition(),
@@ -300,7 +298,7 @@ public class Parser
         return new WhileStatement(condition, statement, keyword.Source);
     }
 
-    private EnumeratorStatement ParseFor()
+    private IteratorStatement ParseIterator()
     {
         var keyword = ConsumeKeyword(KeywordType.For);
         ConsumeSymbol(SymbolType.LeftParenthesis);
@@ -309,13 +307,13 @@ public class Parser
 
         ConsumeKeyword(KeywordType.In);
 
-        var range = ParseRange();
+        var iterable = ParseExpression();
 
         ConsumeSymbol(SymbolType.RightParenthesis);
 
         var body = ParseStatement();
 
-        return new EnumeratorStatement(identifier.Name, range, body, keyword.Source);
+        return new IteratorStatement(identifier.Name, iterable, body, keyword.Source);
     }
 
     private AssertStatement ParseAssert()
@@ -520,18 +518,6 @@ public class Parser
         return null;
     }
 
-    private RangeExpression ParseRange()
-    {
-        var start = ParseExpression();
-
-        ConsumeSymbol(SymbolType.Dot);
-        ConsumeSymbol(SymbolType.Dot);
-
-        var end = ParseExpression();
-
-        return new RangeExpression(start, end);
-    }
-
     private KeywordToken ConsumeKeyword(KeywordType type)
     {
         var keyword = ConsumeToken<KeywordToken>();
@@ -595,6 +581,7 @@ public class Parser
             case OperatorType.LessThanOrEqual:
             case OperatorType.Equal:
             case OperatorType.NotEqual:
+            case OperatorType.Range:
                 return 1;
             case OperatorType.Add:
             case OperatorType.Subtract:

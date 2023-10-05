@@ -30,6 +30,31 @@ public record Type(BuiltinType Root, params Type[] Parameters)
         return this;
     }
 
+    public BuiltinType MatchRoot(BuiltinType other)
+    {
+        if (Root != other) throw new MismatchedTypeException(other, Root);
+
+        return Root;
+    }
+
+    public Type MatchList(Type? memberType = null)
+    {
+        // Check the root type is a list.
+        MatchRoot(BuiltinType.List);
+
+        // Check there is exactly one parameter, the list's member type.
+        if (Parameters.Length != 1) throw new InvalidParameterCountException(1, Parameters.Length);
+
+        // If the member type was specified, match that too.
+        if (memberType is not null)
+        {
+            var actual = Parameters[0] ?? throw new NullReferenceException();
+            actual.Match(memberType);
+        }
+
+        return this;
+    }
+
     public override string ToString()
     {
         StringBuilder builder = new(Root.ToString());

@@ -1,3 +1,4 @@
+using System.Dynamic;
 using Thoth.Parsing;
 using Thoth.Parsing.Expressions;
 using Thoth.Parsing.Statements;
@@ -87,6 +88,16 @@ public class FakeParsedProgram
     public FakeExpressionGeneratorStatement CreateExpressionGeneratorStatement(Expression expression)
         => new(expression);
 
+    public IteratorStatement FakeIteratorStatement(Expression? iterable, Statement? body = null)
+        => AddStatement(
+            new IteratorStatement(
+                Identifier: $"iterator{++NameCount}",
+                Iterable: iterable ?? CreateRangeExpression(),
+                Body: body ?? FakeStatement(),
+                Source: FakeSourceReference
+            )
+        );
+
     public FunctionCallStatement FakeFunctionCallStatement(string? name = null)
         => AddStatement(
             new FunctionCallStatement(
@@ -170,6 +181,9 @@ public class FakeParsedProgram
 
     public IndexExpression CreateIndexExpression(Expression indexable, Expression? index = null)
         => new(indexable, index ?? CreateExpression(Type.Integer));
+
+    public BinaryOperationExpression CreateRangeExpression()
+        => new(OperatorType.Range, CreateExpression(Type.Integer), CreateExpression(Type.Integer));
 
 #endregion
 }

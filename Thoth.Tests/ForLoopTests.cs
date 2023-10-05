@@ -25,4 +25,34 @@ public class ForLoopTests
 
         Assert.That(result.ExitCode, Is.EqualTo(0), "Expected exit with success.");
     }
+
+    [Test]
+    public void ForLoop_IteratesListLiteral()
+    {
+        var result = CompileAndRunSource(@"
+            for (number in list<int>[8, 6, 7, 5, 3, 0, 9])
+            {
+                print(number);
+            }
+        ");
+
+        Assert.That(result.ExitCode, Is.EqualTo(0), "Expected exit with success.");
+        Assert.That(result.Output, Is.EqualTo("8675309"));
+    }
+
+    [Test]
+    public void ForLoop_IteratesListVariable()
+    {
+        var result = CompileAndRunSource(@"
+            list<int> numbers = list<int>[1, 3, 5, 7, 9];
+
+            for (number in numbers)
+            {
+                print(number);
+            }
+        ");
+
+        Assert.That(result.ExitCode, Is.EqualTo(0), "Expected exit with success.");
+        Assert.That(result.Output, Is.EqualTo("13579"));
+    }
 }

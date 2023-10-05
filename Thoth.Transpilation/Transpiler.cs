@@ -429,24 +429,33 @@ public class Transpiler
         return false;
     }
 
-    protected bool GenerateStatement(EnumeratorStatement enumerator)
+    protected bool GenerateStatement(IteratorStatement iterator)
     {
-        WriteCommentLine(enumerator);
+        WriteCommentLine(iterator);
 
-        // Open a scope for the loops local and anonymous variables.
+        return iterator.Iterable switch
+        {
+            BinaryOperationExpression { Operation: OperatorType.Range } range => GenerateRangeIterator(iterator, range),
+            { } other => GenerateListIterator(iterator)
+        };
+    }
+
+    protected bool GenerateRangeIterator(IteratorStatement iterator, BinaryOperationExpression range)
+    {
+        // Open a scope for the iterator's local and anonymous variables.
         OpenScope();
 
         // Generate the end value.
-        TryGenerateExpression(enumerator.Range.End);
+        TryGenerateExpression(range.Right);
 
         // Define the end value as an anonymous local variable.
         var last = DefineAnonymousLocalVariable(Type.Integer);
 
         // Generate the start value.
-        TryGenerateExpression(enumerator.Range.Start);
+        TryGenerateExpression(range.Left);
 
         // Define the current value as a local variable.
-        var current = DefineLocalVariable(Type.Integer, enumerator.Identifier);
+        var current = DefineLocalVariable(Type.Integer, iterator.Identifier);
 
         GenerateConditionalLoop(
             generateTest: (breakLabel) =>
@@ -463,11 +472,70 @@ public class Transpiler
             generateLoopBody: () =>
             {
                 // Generate the loop body.
-                TryGenerateStatement(enumerator.Body);
+                TryGenerateStatement(iterator.Body);
 
-                // Increment the enumerator.
+                // Increment the iterator.
                 WriteCommentLine($"increment iterator");
                 WriteLine($"inc QWORD [{GetVariableLocation(current)}]");
+            }
+        );
+
+        CloseScope();
+
+        // Even if the loop body guarantees a return, it might not be executed, so loops can't guarantee a return.
+        return false;
+    }
+
+    protected bool GenerateListIterator(IteratorStatement iterator)
+    {
+        OpenScope();
+
+        var list = iterator.Iterable switch
+        {
+            VariableExpression variable => GetDefinition(variable.Identifier),
+            ListLiteralExpression literal => DefineAnonymousLocalVariable(TryGenerateExpression(literal)),
+            _ => throw new UnexpectedExpressionException(iterator.Iterable),
+        };
+
+        // Ensure the iteratable is a list.
+        list.Type.MatchList();
+
+        // Get the member type of the list.
+        var memberType = list.Type.Parameters[0] ?? throw new NullReferenceException();
+
+        // Push a zero onto the stack for the current index.
+        GeneratePush("0");
+        var index = DefineAnonymousLocalVariable(Type.Integer);
+
+        // Reserve space on the stack for the current list member.
+        GeneratePush(1);
+        var current = DefineLocalVariable(memberType, iterator.Identifier);
+
+        GenerateConditionalLoop(
+            generateTest: (breakLabel) =>
+            {
+                // Set the source register to the address of the list in memory, which contains the length.
+                WriteLine($"mov QWORD rsi, [{GetVariableLocation(list)}]");
+
+                // Move the current index into the counter register.
+                WriteLine($"mov QWORD rcx, [{GetVariableLocation(index)}]");
+
+                // Compare the current index to the length of the list.
+                WriteLine($"cmp QWORD rcx, [rsi]");
+
+                // Break the loop if the current index is greater than or equal to the length of the list.
+                WriteLine($"jge {breakLabel}");
+
+                // Move the value from the memory location at the index within the list to the current list member.
+                WriteLine($"mov rdx, QWORD [rsi + (rcx + 1) * 8]");
+                WriteLine($"mov QWORD [{GetVariableLocation(current)}], rdx");
+            },
+            generateLoopBody: () =>
+            {
+                TryGenerateStatement(iterator.Body);
+
+                WriteCommentLine($"increment iterator index");
+                WriteLine($"inc QWORD [{GetVariableLocation(index)}]");
             }
         );
 
@@ -654,7 +722,7 @@ public class Transpiler
         var definition = Program.Functions[call.Name] ?? throw new NullReferenceException();
 
         // Check the number of parameters to the call match the function definition.
-        if (call.Parameters.Count != definition.Parameters.Count) throw new InvalidParameterCountException(definition.Name, call.Parameters.Count, definition.Parameters.Count);
+        if (call.Parameters.Count != definition.Parameters.Count) throw new InvalidParameterCountException(definition.Parameters.Count, call.Parameters.Count);
 
         // Reserve a stack entry for the return value, if the function has one, just before the stack frame.
         if (definition.ReturnType is not null)
