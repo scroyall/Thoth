@@ -154,4 +154,24 @@ public class FunctionTests
 
         Assert.That(result.ExitCode, Is.EqualTo(0), "Expected exit with code zero.");
     }
+
+    [Test]
+    public void Function_AssignsLocalVariables()
+    {
+        var result = CompileAndRunSource(@"
+            function foo()
+            {{
+                int y = 1;
+                int z = 2;
+                int w = 3;
+                assert(w == 3);
+                assert(z == 2);
+                assert(y == 1);
+            }}
+
+            foo();
+        ");
+
+        Assert.That(result.ExitCode, Is.EqualTo(0), "Expected exit with success.");
+    }
 }

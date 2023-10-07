@@ -143,14 +143,10 @@ public class Transpiler
         // Write label to which execution will jump to call the function.
         WriteLabelLine(GetFunctionEntryLabel(function.Name));
 
-        // Adjust the stack size after the call has pushed the call return location on to the stack.
-        _stackSize++;
-
         // Define a hidden parameter for the return value, if the function has one.
         if (function.ReturnType is { } type)
         {
             DefineParameter(type, "_return", function.Parameters.Count);
-            _stackSize++;
         }
 
         // Define any parameters.
@@ -159,7 +155,6 @@ public class Transpiler
             var parameter = function.Parameters[index];
 
             DefineParameter(parameter.Type, parameter.Name, function.Parameters.Count - 1 - index);
-            _stackSize++;
         }
 
         OpenStackFrame();
@@ -183,21 +178,16 @@ public class Transpiler
         foreach (var parameter in function.Parameters)
         {
             UndefineVariable(parameter.Name);
-            _stackSize--;
         }
 
         // Undefine the hidden parameter for the return value, if the function has one.
         if (function.ReturnType is not null)
         {
             UndefineVariable("_return");
-            _stackSize--;
         }
 
         // Return to the call site.
         WriteLine("ret");
-
-        // Adjust the stack size back after the return pops the call return location off the stack.
-        _stackSize--;
     }
 
     private void OpenStackFrame()
@@ -205,7 +195,7 @@ public class Transpiler
         WriteCommentLine("open stack frame");
 
         // Push the stack base pointer for the previous stack frame onto the stack for later restoration.
-        GeneratePush("rbp");
+        WriteLine("push rbp");
 
         // Move the current stack pointer into the stack base pointer to create a new stack frame.
         WriteLine("mov rbp, rsp");
@@ -220,7 +210,7 @@ public class Transpiler
         WriteLine("mov rsp, rbp");
 
         // Pop the previous stack base pointer off the stack, restoring the previous stack frame.
-        GeneratePop("rbp");
+        WriteLine("pop rbp");
     }
 
     private void GenerateDefaultExit()
@@ -515,18 +505,22 @@ public class Transpiler
             generateTest: (breakLabel) =>
             {
                 // Set the source register to the address of the list in memory, which contains the length.
+                WriteCommentLine("list address");
                 WriteLine($"mov QWORD rsi, [{GetVariableLocation(list)}]");
 
                 // Move the current index into the counter register.
+                WriteCommentLine("index");
                 WriteLine($"mov QWORD rcx, [{GetVariableLocation(index)}]");
 
                 // Compare the current index to the length of the list.
+                WriteCommentLine("list length");
                 WriteLine($"cmp QWORD rcx, [rsi]");
 
                 // Break the loop if the current index is greater than or equal to the length of the list.
                 WriteLine($"jge {breakLabel}");
 
                 // Move the value from the memory location at the index within the list to the current list member.
+                WriteCommentLine("list member at index");
                 WriteLine($"mov rdx, QWORD [rsi + (rcx + 1) * 8]");
                 WriteLine($"mov QWORD [{GetVariableLocation(current)}], rdx");
             },
@@ -664,7 +658,7 @@ public class Transpiler
         if (type is not null)
         {
             // Discard the return value from the top of the stack.
-            WriteLine("add rsp, 8");
+            GeneratePop(1);
         }
 
         // Function calls are a separate call, so they can't guarantee a return from the current call.
@@ -1079,6 +1073,8 @@ public class Transpiler
         // Add the identifier to the stack of locally defined variables.
         _locals.Push(identifier);
 
+        WriteCommentLine($"variable {identifier} at offset {_stackSize}");
+
         // Add the position of the variable on the stack to the map of variable stack indices.
         var definition = new DefinedVariable(VariableScope.Local, type, _stackSize);
         _definitions[identifier] = definition;
@@ -1090,6 +1086,8 @@ public class Transpiler
     {
         // Push an empty string on to the stack of locally defined variables.
         _locals.Push(string.Empty);
+
+        WriteCommentLine($"anonymous variable at offset {_stackSize}");
 
         return new(VariableScope.Local, type, _stackSize);
     }
@@ -1154,7 +1152,7 @@ public class Transpiler
     {
         return scope switch
         {
-            VariableScope.Local => $"rbp - {offset - 1} * 8",
+            VariableScope.Local => $"rbp - {offset} * 8",
             VariableScope.Parameter => $"rbp + ({offset} + 2) * 8",
             _ => throw new NotImplementedException()
         };

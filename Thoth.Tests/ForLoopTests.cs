@@ -4,6 +4,31 @@ public class ForLoopTests
     : CompilerTests
 {
     [Test]
+    public void ForLoop_AccessesVariableInContainingScope()
+    {
+        var result = CompileAndRunSource(@"
+            int number = 123456789;
+
+            for (other in 1..10)
+            {
+                assert(number == 123456789);
+            }
+
+            int outside = 0;
+            for (other in list<int>[1, 2, 3, 4, 5, 6, 7, 8, 9])
+            {
+                assert(number == 123456789);
+
+                outside = outside + other;
+            }
+
+            assert(outside == 45);
+        ");
+
+        Assert.That(result.ExitCode, Is.EqualTo(0), "Expected exit with success.");
+    }
+
+    [Test]
     public void ForLoop_Nested_IteratesCorrectly()
     {
         var result = CompileAndRunSource(@"
