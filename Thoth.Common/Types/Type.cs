@@ -2,15 +2,17 @@ using System.Text;
 
 namespace Thoth;
 
-public record Type(BuiltinType Root, params Type[] Parameters)
+public record Type(BuiltinType Root, Type[] Parameters)
 {
 #region Built-in Types
 
-    public static Type Integer = new(BuiltinType.Int);
+    public static Type Integer = new(BuiltinType.Int, []);
 
-    public static Type Boolean = new(BuiltinType.Bool);
+    public static Type Boolean = new(BuiltinType.Bool, []);
 
-    public static Type String = new(BuiltinType.String);
+    public static Type String = new(BuiltinType.String, []);
+
+    public static Type Object => new(BuiltinType.Object, []);
 
     public static Type List(Type parameter) => new(BuiltinType.List, [parameter]);
 

@@ -5,5 +5,6 @@ public enum BuiltinType
     Int,
     Bool,
     String,
-    List
+    List,
+    Object,
 }

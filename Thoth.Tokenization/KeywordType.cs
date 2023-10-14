@@ -10,7 +10,8 @@ public enum KeywordType
     Assert,
     Print,
     Function,
-    Return
+    Return,
+    Class
 }
 
 public static class KeywordExtensions

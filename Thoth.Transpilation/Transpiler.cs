@@ -665,6 +665,14 @@ public class Transpiler
         return false;
     }
 
+    protected bool GenerateStatement(ClassDefinitionStatement definition)
+    {
+        WriteCommentLine(definition);
+
+        // Classes don't generate any statements when defined, so they can't guarantee a return.
+        return false;
+    }
+
     #endregion
 
     #region Expressions

@@ -12,6 +12,9 @@ public class UnexpectedTokenException(Token token)
 public class MultiplyDefinedFunctionException(string name)
     : Exception($"Function '{name}' is already defined.");
 
+public class MultiplyDefinedClassException(string name)
+    : Exception($"Class '{name}' is already defined.");
+
 public class Parser
 {
     private AtomStack<Token>? _tokens = null;
@@ -25,6 +28,8 @@ public class Parser
     private List<Statement> Statements { get; } = [];
 
     private Dictionary<string, DefinedFunction> Functions { get; } = [];
+
+    private Dictionary<string, DefinedClass> Classes { get; } = [];
 
     public ParsedProgram Parse(TokenizedProgram program)
     {
@@ -41,7 +46,7 @@ public class Parser
             Statements.Add(ParseStatement());
         }
 
-        return new ParsedProgram(Statements, Strings, Functions);
+        return new ParsedProgram(Statements, Strings, Functions, Classes);
     }
 
     private Statement ParseStatement()
@@ -69,8 +74,21 @@ public class Parser
             KeywordType.Print    => ParsePrint(),
             KeywordType.Function => ParseFunctionDefinition(),
             KeywordType.Return   => ParseReturn(),
+            KeywordType.Class    => ParseClass(),
             _ => throw new UnexpectedTokenException(keyword)
         };
+    }
+
+    private ClassDefinitionStatement ParseClass()
+    {
+        var keyword = ConsumeKeyword(KeywordType.Class);
+        var identifier = ConsumeToken<IdentifierToken>();
+
+        ConsumeSymbol(SymbolType.LeftBrace);
+        ConsumeSymbol(SymbolType.RightBrace);
+
+        DefineClass(identifier.Name);
+        return new(identifier.Name, keyword.Source);
     }
 
     private ReturnStatement ParseReturn()
@@ -596,12 +614,17 @@ public class Parser
         }
     }
 
-    private int DefineFunction(string name, IReadOnlyList<NamedParameter> parameters, Type? returnType, Statement body, SourceReference source)
+    private void DefineFunction(string name, IReadOnlyList<NamedParameter> parameters, Type? returnType, Statement body, SourceReference source)
     {
         if (Functions.ContainsKey(name)) throw new MultiplyDefinedFunctionException(name);
 
         Functions[name] = new DefinedFunction(name, parameters, returnType, body, source);
+    }
 
-        return Functions.Count - 1;
+    private void DefineClass(string name)
+    {
+        if (Classes.ContainsKey(name)) throw new MultiplyDefinedClassException(name);
+
+        Classes[name] = new DefinedClass(name, Type.Object);
     }
 }

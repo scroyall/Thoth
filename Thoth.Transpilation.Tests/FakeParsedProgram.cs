@@ -20,6 +20,7 @@ public class FakeParsedProgram
     public List<Statement> Statements { get; } = [];
     public List<string> Strings { get; } = [];
     public Dictionary<string, DefinedFunction> Functions { get; } = [];
+    public Dictionary<string, DefinedClass> Classes { get; } = [];
 
     public static readonly SourceReference FakeSourceReference = new(-1, -1);
 
@@ -35,14 +36,27 @@ public class FakeParsedProgram
             FakeSourceReference
         );
 
-        if (Functions.Keys.Contains(defined.Name)) throw new MultiplyDefinedFunctionException(defined.Name);
+        if (Functions.ContainsKey(defined.Name)) throw new MultiplyDefinedFunctionException(defined.Name);
         Functions[defined.Name] = defined;
 
         return defined;
     }
 
+    public DefinedClass FakeDefinedClass(string? name = null)
+    {
+        var defined = new DefinedClass(
+            name ?? $"class{++NameCount}",
+            Type.Object
+        );
+
+        if (Classes.ContainsKey(defined.Name)) throw new MultiplyDefinedClassException(defined.Name);
+        Classes[defined.Name] = defined;
+
+        return defined;
+    }
+
     public ParsedProgram ToParsedProgram()
-        => new(Statements, Strings, Functions);
+        => new(Statements, Strings, Functions, Classes);
 
 #region Statements
 
@@ -82,6 +96,13 @@ public class FakeParsedProgram
                 condition ?? CreateExpression(Type.Boolean),
                 statement ?? FakeStatement(),
                 FakeSourceReference
+            )
+        );
+
+    public ClassDefinitionStatement FakeClassDefinitionStatement(string? name = null)
+        => AddStatement(
+            new ClassDefinitionStatement(
+                FakeDefinedFunction(name).Name, FakeSourceReference
             )
         );
 
